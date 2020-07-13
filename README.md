@@ -4,5 +4,5 @@ The assignment and tracking of stable identifiers in the VEupathDB project. This
 
 * Main source code to interact with the stable_identifier_authority database and managing stable_identifier.
 
-Database_schema: The database schema for the stable_identifier_authority database.
+* schema: The database schema for the stable_identifier_authority database.
  
