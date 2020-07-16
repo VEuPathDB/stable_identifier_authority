@@ -7,10 +7,12 @@ from stable_identifier import StableIdentifierEvent, StableIdentifierLog, Stable
 from operation import StableIdentifierOperation, StableIdentifierTransaction
 import pymysql.cursors
 
+password = 'xxxxxxx'
+
 
 class SetUpTestDatabase:
     def __init__(self):
-        self.connection = pymysql.connect(host='localhost', user='test_user', password='pass',
+        self.connection = pymysql.connect(host='localhost', user='test_user', password=password,
                                           db='test_stable_identifier_authority',
                                           charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
 
@@ -56,7 +58,7 @@ class SetUpTestDatabase:
 class TransactionTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.test_database = DatabaseConnection('localhost', 'test_user', 'pass', 'test_stable_identifier_authority')
+        cls.test_database = DatabaseConnection('localhost', 'test_user', password, 'test_stable_identifier_authority')
 
     def setUp(self):
         test_setup_database = SetUpTestDatabase()
@@ -77,7 +79,7 @@ class TransactionTestCase(unittest.TestCase):
         new_identifier, version = event_transaction.create_new_identifier()
         event_transaction.update_version(new_identifier)
         events = StableIdentifierEvent(self.test_database)
-        updated_version = events.get_stable_identifier(new_identifier)
+        _, updated_version, _ = events.get_stable_identifier(new_identifier)
         self.assertEqual(2, updated_version)
 
     def test_delete_identifier(self):
@@ -118,7 +120,7 @@ class OperationTestCase(unittest.TestCase):
         test_setup_database.load_test_species()
         test_setup_database.load_test_session()
         test_setup_database.load_test_log()
-        cls.test_database = DatabaseConnection('localhost', 'test_user', 'pass', 'test_stable_identifier_authority')
+        cls.test_database = DatabaseConnection('localhost', 'test_user', password, 'test_stable_identifier_authority')
 
     def test_generate_stable_identifier(self):
         test_organism = Organism(self.test_database, 'aedes_aegypti_lvpagwg')
@@ -137,13 +139,13 @@ class IdentifierTestCase(unittest.TestCase):
         test_setup_database = SetUpTestDatabase()
         test_setup_database.load_test_species()
         test_setup_database.load_test_session()
-        cls.test_database = DatabaseConnection('localhost', 'test_user', 'pass', 'test_stable_identifier_authority')
+        cls.test_database = DatabaseConnection('localhost', 'test_user', password, 'test_stable_identifier_authority')
 
     def test_insert_identifier(self):
         test_event = StableIdentifierEvent(self.test_database)
         test_event.insert_identifier('AAEL_g000001', 1, 1)
 
-        version, future_id = test_event.get_stable_identifier('AAEL_g000001')
+        event_id, version, future_id = test_event.get_stable_identifier('AAEL_g000001')
 
         self.assertEqual(0, version)
         self.assertEqual(1, future_id)
@@ -152,7 +154,7 @@ class IdentifierTestCase(unittest.TestCase):
         test_event = StableIdentifierEvent(self.test_database)
         test_event.make_identifier_obsolete('AAEL_g000001')
 
-        version, future_id = test_event.get_stable_identifier('AAEL_g000001')
+        event_id, version, future_id = test_event.get_stable_identifier('AAEL_g000001')
         print(version)
         self.assertIsNone(version)
 
@@ -170,7 +172,7 @@ class FeatureTestCase(unittest.TestCase):
     def setUpClass(cls):
         test_setup_database = SetUpTestDatabase()
         test_setup_database.load_test_species()
-        cls.test_database = DatabaseConnection('localhost', 'test_user', 'pass', 'test_stable_identifier_authority')
+        cls.test_database = DatabaseConnection('localhost', 'test_user', password, 'test_stable_identifier_authority')
 
     def test_feature_type(self):
         test_feature = FeatureType(self.test_database, 'gene')
@@ -182,7 +184,7 @@ class SessionTestCase(unittest.TestCase):
     def setUpClass(cls):
         test_setup_database = SetUpTestDatabase()
         test_setup_database.load_test_species()
-        cls.test_database = DatabaseConnection('localhost', 'test_user', 'pass', 'test_stable_identifier_authority')
+        cls.test_database = DatabaseConnection('localhost', 'test_user', password, 'test_stable_identifier_authority')
 
     def test_session(self):
         test_session = Session(self.test_database, 'test_app', '1', 'aedes_aegypti_lvpagwg',
@@ -200,7 +202,7 @@ class OrganismTestCase(unittest.TestCase):
     def setUpClass(cls):
         test_setup_database = SetUpTestDatabase()
         test_setup_database.load_test_species()
-        cls.test_database = DatabaseConnection('localhost', 'test_user', 'pass', 'test_stable_identifier_authority')
+        cls.test_database = DatabaseConnection('localhost', 'test_user', password, 'test_stable_identifier_authority')
 
     def test_organism(self):
         species = Organism(self.test_database, 'aedes_aegypti_lvpagwg')
