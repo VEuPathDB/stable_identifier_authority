@@ -11,7 +11,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(1, feature.version)
 
     def test_gene(self):
-        model = {"id": "ABCD00001", "version": 1, "children": [{"id": "ABCD00001_R0001", "version": 2,
+        model = {"source": "apollo", "id": "ABCD00001", "version": 1, "children": [{"id": "ABCD00001_R0001", "version": 2,
                                                                 "children": [{"id": "ABCD00001_P0001", "version": 2}]}]}
         gene = genomic_features.ProteinCodingGene(model)
         self.assertEqual("ABCD00001", gene.source_id)

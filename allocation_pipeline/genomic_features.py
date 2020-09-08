@@ -9,9 +9,9 @@ class Feature:
     ancestors = list()
 
     def __init__(self, model):
-        self.store_model(model)
+        self.setup_model(model)
 
-    def store_model(self, model):
+    def setup_model(self, model):
         self.source_id = model['id']
         self.version = model['version']
 
@@ -22,12 +22,13 @@ class ProteinCodingGene(Feature):
 
         def __init__(self, model):
             super().__init__(model)
+            self.source = model['source']
             self._create_mrna(model['children'])
 
         def _create_mrna(self, model):
             for mrna_model in model:
                 mrna = MRNA(mrna_model)
-                mrna.store_model(mrna_model)
+                mrna.setup_model(mrna_model)
                 self.mrnas.append(mrna)
 
 
