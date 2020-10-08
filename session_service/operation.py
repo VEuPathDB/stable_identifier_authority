@@ -38,5 +38,6 @@ class StableIdentifierTransaction:
             stable_identifier)
         if stable_identifier_record_id is not None:
             self.stable_identifier_record.make_identifier_obsolete(stable_identifier)
-
-        return stable_identifier_record_id
+            return stable_identifier_record_id
+        else:
+            return False

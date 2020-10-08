@@ -11,8 +11,7 @@ class StableIdentifierRecord:
 
     def make_identifier_obsolete(self, stable_identifier):
         success = self.database_connection.update('stable_identifier_record', {'status': 'obsolete'},
-                                        {'stable_identifier': stable_identifier,
-                                         'status': 'current'})
+                                                  {'stable_identifier': stable_identifier, 'status': 'current'})
         return success
 
     def get_stable_identifier(self, stable_identifier):

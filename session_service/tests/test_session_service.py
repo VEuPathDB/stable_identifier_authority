@@ -7,7 +7,7 @@ from stable_identifier import StableIdentifierRecord
 from operation import StableIdentifierTransaction
 import pymysql.cursors
 
-config_file = '/Users/mikkel/Development/Stable_Identifier_for_VEuPathDB/session_service.conf'
+config_file = './session_service.conf'
 config = configparser.ConfigParser()
 config.read(config_file)
 db_name = config['DataBase']['db_name']
@@ -91,6 +91,7 @@ class IdentifierTestCase(unittest.TestCase):
 
     def test_make_obsolete(self):
         test_event = StableIdentifierRecord(self.test_database)
+        test_event.insert_identifier('AAEL_g000001', 'gene', 1)
         test_event.make_identifier_obsolete('AAEL_g000001')
 
         record_id, _ = test_event.get_stable_identifier('AAEL_g000001')
