@@ -7,7 +7,7 @@ from stable_identifier import StableIdentifierRecord
 from operation import StableIdentifierTransaction
 import pymysql.cursors
 
-config_file = './session_service.conf'
+config_file = '/Users/mikkel/Development/Stable_Identifier_for_VEuPathDB/session_service.conf'
 config = configparser.ConfigParser()
 config.read(config_file)
 db_name = config['DataBase']['db_name']
@@ -45,7 +45,7 @@ class SetUpTestDatabase:
 class TransactionTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.test_database = DatabaseConnection(db_host, db_user, db_pass, db_name)
+        cls.test_database = DatabaseConnection(db_host, db_user, db_pass, db_name, './test_mysql_error')
 
     def setUp(self):
         test_setup_database = SetUpTestDatabase()
@@ -55,9 +55,9 @@ class TransactionTestCase(unittest.TestCase):
         transaction = StableIdentifierTransaction(self.test_database, 'test_app', 1,
                                                         'my_test_database', 'test_run')
         new_identifier = transaction.insert_new_identifier('AAEL_g000001', 'gene')
-        self.assertEqual('AAEL_g000001', new_identifier)
+        self.assertEqual(1, new_identifier)
         new_identifier_2 = transaction.insert_new_identifier('AAEL_g000002', 'gene')
-        self.assertEqual('AAEL_g000002', new_identifier_2)
+        self.assertEqual(2, new_identifier_2)
         new_identifier_3 = transaction.insert_new_identifier('AAEL_g000002', 'gene')
         self.assertEqual(False, new_identifier_3)
 
@@ -79,7 +79,7 @@ class IdentifierTestCase(unittest.TestCase):
         test_setup_database = SetUpTestDatabase()
         test_setup_database.load_test_species()
         test_setup_database.load_test_session()
-        cls.test_database = DatabaseConnection(db_host, db_user, db_pass, db_name)
+        cls.test_database = DatabaseConnection(db_host, db_user, db_pass, db_name, './test_mysql_error')
 
     def test_insert_identifier(self):
         test_event = StableIdentifierRecord(self.test_database)
@@ -103,7 +103,7 @@ class SessionTestCase(unittest.TestCase):
     def setUpClass(cls):
         test_setup_database = SetUpTestDatabase()
         test_setup_database.load_test_species()
-        cls.test_database = DatabaseConnection(db_host, db_user, db_pass, db_name)
+        cls.test_database = DatabaseConnection(db_host, db_user, db_pass, db_name, './test_mysql_error')
 
     def test_session(self):
         test_session = Session(self.test_database, 'test_app', '1', 'my_test_database', 'test case')

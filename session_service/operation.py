@@ -22,10 +22,9 @@ class StableIdentifierTransaction:
 
     def insert_new_identifier(self, new_stable_identifier, feature_type):
 
-        self.stable_identifier_record.insert_identifier(new_stable_identifier,
-                                                        feature_type,
-                                                        self.session.session_id)
-        return new_stable_identifier
+        last_insert_id = self.stable_identifier_record.insert_identifier(new_stable_identifier,
+                                                                         feature_type, self.session.session_id)
+        return last_insert_id
 
     def insert_batch_identifiers(self, stable_identifiers, feature_type):
         identifiers = list()

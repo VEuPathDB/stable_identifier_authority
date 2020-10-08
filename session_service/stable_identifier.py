@@ -3,14 +3,17 @@ class StableIdentifierRecord:
         self.database_connection = database_connection
 
     def insert_identifier(self, stable_identifier, feature_type, session_id, status='current'):
-        self.database_connection.commit('stable_identifier_record', {'stable_identifier': stable_identifier,
-                                                                     'feature_type': feature_type,
-                                                                     'sie_session_id': session_id, 'status': status})
+        last_insert_id = self.database_connection.commit('stable_identifier_record',
+                                                         {'stable_identifier': stable_identifier,
+                                                          'feature_type': feature_type, 'sie_session_id': session_id,
+                                                          'status': status})
+        return last_insert_id
 
     def make_identifier_obsolete(self, stable_identifier):
-        self.database_connection.update('stable_identifier_record', {'status': 'obsolete'},
+        success = self.database_connection.update('stable_identifier_record', {'status': 'obsolete'},
                                         {'stable_identifier': stable_identifier,
                                          'status': 'current'})
+        return success
 
     def get_stable_identifier(self, stable_identifier):
         database_values = self.database_connection.load('stable_identifier_record',
