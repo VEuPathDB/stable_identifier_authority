@@ -13,7 +13,7 @@ class GFFAnnotations:
         self._current_fields = None
         self._output_gff_handle = None
 
-    def read_gff(self):
+    def annotate_gff(self):
         """open gff file """
         input_gff_handle = open(self.in_gff_file, 'r')
         self._output_gff_handle = open(self.out_gff_file, 'w')
@@ -23,8 +23,8 @@ class GFFAnnotations:
             self._current_fields = self._current_gff_line.rstrip().split("\t")
             if self._is_feature_line():
                 source_id, source_parent_id = self._extract_ids()
-                allocated_id, allocated_parent = self.get_feature_info(source_id, source_parent_id)
-                self.update_gff_feature(allocated_id, allocated_parent)
+                allocated_id, allocated_parent = self._get_feature_info(source_id, source_parent_id)
+                self._update_gff_feature(allocated_id, allocated_parent)
             else:
                 """write to GFF"""
                 self._output_gff_handle.write(self._current_gff_line + '\n')
@@ -36,13 +36,13 @@ class GFFAnnotations:
         else:
             return False
 
-    def get_feature_info(self, source_id, source_parent_id):
+    def _get_feature_info(self, source_id, source_parent_id):
         allocated_id = self.event_collection.get_allocated_id(source_id)
         allocated_parent = self.event_collection.get_allocated_id(source_parent_id)
 
         return allocated_id, allocated_parent
 
-    def update_gff_feature(self, allocated_id, allocated_parent):
+    def _update_gff_feature(self, allocated_id, allocated_parent):
 
         new_id = 'ID={};'.format(allocated_id)
         self._current_gff_line = re.sub(r'ID=.*;', new_id, self._current_gff_line)

@@ -15,7 +15,7 @@ class OSIDService:
             for organism in response.json():
                 return organism[0]["organismId"]
         else:
-            pass
+            return False
 
     def get_gene_id(self, organism_id, generate_genes):
         url = self.url_base + ''
@@ -24,7 +24,13 @@ class OSIDService:
         if response.status_code == requests.codes.ok:
             return response.json()["generatedIds"]
         else:
-            pass
+            return False
 
-    def get_transcripts(self, ):
-        pass
+    def get_transcripts(self, transcript_patch):
+        url = self.url_base + ''
+        webservice_data = transcript_patch
+        response = requests.post(url, json=webservice_data)
+        if response.status_code == requests.codes.ok:
+            return response.json()["generatedIds"]
+        else:
+            return False

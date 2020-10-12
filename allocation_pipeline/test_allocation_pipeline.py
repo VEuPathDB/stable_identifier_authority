@@ -82,5 +82,6 @@ class EventFileTestCase(unittest.TestCase):
         self.assertEqual("ABC00015\tmerge_gene\tABCD00002\n", lines[1])
         file_handle.close()
 
+
 if __name__ == '__main__':
     unittest.main()
