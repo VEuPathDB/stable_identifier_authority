@@ -1,9 +1,9 @@
 import pymysql.cursors
 import configparser
 import sys
-import event_connection
-import annotation_events
-import osid_service
+from event_connection import AnnotationEventDB
+from annotation_events import EventCollection
+from osid_service import OSIDService
 import event_output
 
 
@@ -26,9 +26,9 @@ if __name__ == '__main__':
     allocation_config.read(allocation_config_file)
 
     db_connection = get_database_connection(allocation_config)
-    event_connection = event_connection.AnnotationEventDB(db_connection)
-    osid_service = osid_service.OSIDService(allocation_config)
-    event_collection = annotation_events.EventCollection('test_species', event_connection, osid_service)
+    event_connection = AnnotationEventDB(db_connection)
+    osid_service = OSIDService(allocation_config)
+    event_collection = EventCollection('test_species', event_connection, osid_service)
     event_collection.create_event_collection()
     gff_annotation = event_output.GFFAnnotations('input_gff', 'out_put_gff', event_collection)
     gff_annotation.annotate_gff()
