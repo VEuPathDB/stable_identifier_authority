@@ -12,7 +12,7 @@ class EventCollection:
         self.annotation_event_list = list()
         self.feature_index = dict()
 
-    def create_event_collection(self):
+    def create(self):
         for event_type in self.event_types:
             if event_type == 'change_gene':
                 annotation_event = EditOnlyEvent(event_type, self.organism_name,
@@ -21,7 +21,7 @@ class EventCollection:
                 annotation_event = CreateGeneModelEvent(event_type, self.organism_name,
                                                         self.event_connection, self.stable_id_service)
 
-            annotation_event.setup_annotation_events(self.feature_index)
+            annotation_event.setup(self.feature_index)
             annotation_event.get_new_stable_ids()
             annotation_event.update_ancestors()
             self.annotation_event_list.append(annotation_event)
@@ -43,7 +43,7 @@ class AnnotationEvent:
         self.event_connection = event_connection
         self.stable_id_service = stable_id_service
 
-    def setup_annotation_events(self, index):
+    def setup(self, index):
         events = self.event_connection.get_annotations_events(self.event_type)
 
         for event in events:

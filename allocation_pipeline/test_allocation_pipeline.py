@@ -72,7 +72,7 @@ class EventFileTestCase(unittest.TestCase):
         stable_id_service = OSIDService(None)
         event_collection = EventCollection('test', event_connection, stable_id_service)
         event_collection.event_types = {'merge_gene'}
-        event_collection.create_event_collection()
+        event_collection.create()
 
         event_file = AnnotationEventFile(event_collection, 'test_file')
         event_file.write_event_file()

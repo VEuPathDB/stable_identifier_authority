@@ -29,7 +29,7 @@ if __name__ == '__main__':
     event_connection = AnnotationEventDB(db_connection)
     osid_service = OSIDService(allocation_config)
     event_collection = EventCollection('test_species', event_connection, osid_service)
-    event_collection.create_event_collection()
+    event_collection.create()
     gff_annotation = event_output.GFFAnnotations('input_gff', 'out_put_gff', event_collection)
     gff_annotation.annotate_gff()
     event_file = event_output.AnnotationEventFile(event_collection, 'event_file')
