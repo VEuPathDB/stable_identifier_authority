@@ -1,8 +1,8 @@
 import pymysql.cursors
 import configparser
-import event_connection
-import annotation_events
-import osid_service
+from event_connection import AnnotationEventDB
+from annotation_events import EventCollection
+from osid_service import OSIDService
 import event_output
 
 
@@ -30,10 +30,11 @@ if __name__ == '__main__':
     organism_production_name = allocation_config['ProductionOrganism']['name']
 
     db_connection = get_database_connection(allocation_config)
-    event_connection = event_connection.AnnotationEventDB(db_connection)
-    osid_service = osid_service.OSIDService(allocation_config)
-    event_collection = annotation_events.EventCollection(organism_production_name, event_connection, osid_service)
-    event_collection.create_event_collection()
+
+    event_connection = AnnotationEventDB(db_connection)
+    osid_service = OSIDService(allocation_config)
+    event_collection = EventCollection(organism_production_name, event_connection, osid_service)
+    event_collection.create()
     gff_annotation = event_output.GFFAnnotations(input_gff_path, output_gff_path, event_collection)
     gff_annotation.annotate_gff()
     event_file = event_output.AnnotationEventFile(event_collection, event_file_path)
