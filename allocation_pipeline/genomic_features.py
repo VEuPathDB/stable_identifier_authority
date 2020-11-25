@@ -39,7 +39,7 @@ class ProteinCodingGene(Feature):
         def update_transcripts(self, transcripts, translations):
 
             if len(transcripts) != len(self.mrnas):
-                'error'
+                return False
             for index, mrna in enumerate(self.mrnas):
                 mrna.set_allocated_id((transcripts[index], translations[index]))
 

@@ -27,8 +27,11 @@ class EventCollection:
             self.annotation_event_list.append(annotation_event)
 
     def get_allocated_id(self, source_id):
-        gene = self.feature_index[source_id]
-        return gene.allocated_id
+        try:
+            gene = self.feature_index[source_id]
+            return gene.allocated_id
+        except KeyError:
+            return None
 
 
 class AnnotationEvent:
@@ -55,10 +58,7 @@ class AnnotationEvent:
         for gene_model in event:
             gene = ProteinCodingGene(gene_model, index)
             genes.append(gene)
-            if gene.source_id in self.gene_event_index:
-                self.gene_event_index[gene.source_id].append(genes)
-            else:
-                self.gene_event_index[gene.source_id] = [genes]
+            self.gene_event_index[gene.source_id] = genes
 
             if gene.source != 'reference':
                 self.new_gene_count += 1
@@ -73,14 +73,14 @@ class AnnotationEvent:
                 return len(gene.mrnas)
 
     def _allocate_to_transcript(self, gene_model):
-        for gene_info in gene_model['generatedIds']:
+        for gene_info in gene_model:
             allocated_id = gene_info['geneId']
             gene = self.allocated_index[allocated_id]
             gene.update_transcripts(gene_info['transcripts'], gene_info['proteins'])
 
     def update_ancestors(self):
-        ancestors = list()
         for event in self.event_list:
+            ancestors = list()
             for gene in event:
                 if gene.source == 'reference':
                     ancestors.append(gene)
@@ -96,27 +96,30 @@ class CreateGeneModelEvent(AnnotationEvent):
 
     def get_new_stable_ids(self):
         organism_id = self.stable_id_service.get_organism_id(self.organism_name)
-        generated_genes = self.stable_id_service.get_gene_id(organism_id, self.new_gene_count)
+        id_set_id, generated_genes = self.stable_id_service.get_gene_id(organism_id, self.new_gene_count)
         transcript_patch = list()
-        for gene in generated_genes['generatedIds']:
+        for gene in generated_genes:
             gene_id = gene['geneId']
             transcript_number = self._allocate_to_gene(gene_id)
             transcript_patch.append({'geneId': gene_id, 'transcripts': transcript_number})
-        requested_id = self.stable_id_service.get_transcripts(transcript_patch)
+        requested_id = self.stable_id_service.get_transcripts(id_set_id, transcript_patch)
         self._allocate_to_transcript(requested_id)
 
 
 class EditOnlyEvent(AnnotationEvent):
     """A change to the gene model structure"""
     def get_new_stable_ids(self):
+        organism_id = self.stable_id_service.get_organism_id(self.organism_name)
+        id_set_id, _ = self.stable_id_service.get_gene_id(organism_id, 0)
+        reference_gene = None
         for created_gene in self.created_genes:
             event = self.gene_event_index[created_gene.source_id]
             for gene in event:
-                if gene.source != 'reference':
+                if gene.source == 'reference':
                     reference_gene = gene
-                    created_gene.allocated_id = reference_gene.source_id
+            created_gene.allocated_id = reference_gene.source_id
             transcript_number = len(created_gene.mrnas)
             transcript_patch = list()
             transcript_patch.append({'geneId': created_gene.allocated_id, 'transcripts': transcript_number})
-            gene_model = self.stable_id_service.get_transcripts(transcript_patch)
-            created_gene.update_transcripts(gene_model['transcripts'], gene_model['proteins'])
+            gene_model = self.stable_id_service.get_transcripts(id_set_id, transcript_patch)
+            created_gene.update_transcripts(gene_model[0]['transcripts'], gene_model[0]['proteins'])

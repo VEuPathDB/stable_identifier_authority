@@ -46,7 +46,7 @@ class AnnotationEventDB:
         transcript_db = self.execute_sql(sql, gene_id)
         transcript_list = list()
         for transcript in transcript_db:
-            transcript_list.append(transcript['transcript_id'])
+            transcript_list.append({'id': transcript['transcript_id'], "children": [{'id': None}]})
         return transcript_list
 
     def execute_sql(self, sql, values):

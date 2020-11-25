@@ -4,15 +4,17 @@ import genomic_features
 
 class MyTestCase(unittest.TestCase):
     def test_feature(self):
+        index = dict()
         model = {"id": "ABCD00001", "version": 1, "children": [{"id": "ABCD00001_R0001",
                                                                 "children": [{"id": "ABCD00001_P0001", "version": 2}]}]}
-        feature = genomic_features.Feature(model)
+        feature = genomic_features.Feature(model, index)
         self.assertEqual("ABCD00001", feature.source_id)
 
     def test_gene(self):
+        index = dict()
         model = {"source": "apollo", "id": "ABCD00001", "children": [{"id": "ABCD00001_R0001", "version": 2,
                                                                 "children": [{"id": "ABCD00001_P0001", "version": 2}]}]}
-        gene = genomic_features.ProteinCodingGene(model)
+        gene = genomic_features.ProteinCodingGene(model, index)
         self.assertEqual("ABCD00001", gene.source_id)
         self.assertEqual(1, len(gene.mrnas))
         mrna = gene.mrnas[0]

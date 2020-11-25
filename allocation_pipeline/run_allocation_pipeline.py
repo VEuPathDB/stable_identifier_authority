@@ -1,6 +1,5 @@
 import pymysql.cursors
 import configparser
-import sys
 import event_connection
 import annotation_events
 import osid_service
@@ -12,7 +11,7 @@ def get_database_connection(config,
 
     database_name = config['DataBase']['db_name']
     host = config['DataBase']['db_host']
-    port = config['DataBase']['db_port']
+    port = int(config['DataBase']['db_port'])
     user = config['DataBase']['db_user']
     password = config['DataBase']['db_pass']
 
@@ -21,16 +20,21 @@ def get_database_connection(config,
 
 
 if __name__ == '__main__':
-    allocation_config_file = sys.argv[0]
+    allocation_config_file = './allocation_pipeline.conf'
     allocation_config = configparser.ConfigParser()
     allocation_config.read(allocation_config_file)
+
+    input_gff_path = allocation_config['FILE']['input_gff']
+    output_gff_path = allocation_config['FILE']['output_gff']
+    event_file_path = allocation_config['FILE']['event']
+    organism_production_name = allocation_config['ProductionOrganism']['name']
 
     db_connection = get_database_connection(allocation_config)
     event_connection = event_connection.AnnotationEventDB(db_connection)
     osid_service = osid_service.OSIDService(allocation_config)
-    event_collection = annotation_events.EventCollection('test_species', event_connection, osid_service)
+    event_collection = annotation_events.EventCollection(organism_production_name, event_connection, osid_service)
     event_collection.create_event_collection()
-    gff_annotation = event_output.GFFAnnotations('input_gff', 'out_put_gff', event_collection)
+    gff_annotation = event_output.GFFAnnotations(input_gff_path, output_gff_path, event_collection)
     gff_annotation.annotate_gff()
-    event_file = event_output.AnnotationEventFile(event_collection, 'event_file')
+    event_file = event_output.AnnotationEventFile(event_collection, event_file_path)
     event_file.write_event_file()

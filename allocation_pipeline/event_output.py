@@ -3,7 +3,7 @@ import re
 
 
 class GFFAnnotations:
-    allowed_feature = {'gene', 'mRNA', 'CDS'}
+    allowed_feature = {'gene', 'mRNA', 'CDS', 'exon'}
 
     def __init__(self, input_gff_file, output_gff_file, event_collection):
         self.in_gff_file = input_gff_file
@@ -30,8 +30,7 @@ class GFFAnnotations:
                 self._output_gff_handle.write(self._current_gff_line + '\n')
 
     def _is_feature_line(self):
-        feature_type = self._current_fields[2]
-        if feature_type in self.allowed_feature:
+        if len(self._current_fields) == 9 and self._current_fields[2] in self.allowed_feature:
             return True
         else:
             return False
@@ -44,12 +43,13 @@ class GFFAnnotations:
 
     def _update_gff_feature(self, allocated_id, allocated_parent):
 
-        new_id = 'ID={};'.format(allocated_id)
-        self._current_gff_line = re.sub(r'ID=.*;', new_id, self._current_gff_line)
+        if allocated_id is not None:
+            new_id = 'ID={};'.format(allocated_id)
+            self._current_gff_line = re.sub(r'ID=.*?;', new_id, self._current_gff_line)
 
         if allocated_parent is not None:
             new_parent_id = 'Parent={};'.format(allocated_parent)
-            self._current_gff_line = re.sub(r'Parent=.*;', new_parent_id, self._current_gff_line)
+            self._current_gff_line = re.sub(r'Parent=.*?;', new_parent_id, self._current_gff_line)
 
         self._output_gff_handle.write(self._current_gff_line + '\n')
 
@@ -78,8 +78,12 @@ class AnnotationEventFile:
             for event in annotation_event_type.event_list:
                 for gene in event:
                     if gene.source_id != 'reference':
-                        for ancestor in gene.ancestors:
+                        if len(gene.ancestors) == 0 and gene.allocated_id:
                             self.file_handle.write(gene.allocated_id
-                                                   + "\t" + event_type + "\t" + ancestor.source_id + "\n")
+                                                   + "\t" + event_type + "\t" + '' + "\n")
+                        else:
+                            for ancestor in gene.ancestors:
+                                self.file_handle.write(gene.allocated_id
+                                                       + "\t" + event_type + "\t" + ancestor.source_id + "\n")
 
         self.file_handle.close()
