@@ -1,3 +1,16 @@
+"""
+Copyright [2019-2020] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+     http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 from sqlalchemy.orm import Session as SqlSession
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -186,7 +199,8 @@ class SessionIdentifierAction:
     def post(self, **kwargs):
         if 'stable_identifier_record_id' in kwargs and 'session_id' in kwargs and 'action' in kwargs:
             new_session_identifier_action = self.session_identifier_action(
-                sia_stable_identifier_record_id=kwargs['stable_identifier_record_id'], sia_session_id=kwargs['session_id'],
+                sia_stable_identifier_record_id=kwargs['stable_identifier_record_id'],
+                sia_session_id=kwargs['session_id'],
                 action=kwargs['action'])
             self.sql_session.add(new_session_identifier_action)
             try:

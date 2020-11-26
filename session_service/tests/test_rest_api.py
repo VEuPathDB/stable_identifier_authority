@@ -4,7 +4,7 @@ import pymysql.cursors
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
-import rest_api
+from session_service import rest_api
 
 
 class SetUpTestDatabase:

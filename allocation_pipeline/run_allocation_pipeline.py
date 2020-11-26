@@ -14,10 +14,14 @@ limitations under the License.
 
 import pymysql.cursors
 import configparser
-from event_connection import AnnotationEventDB
-from annotation_events import EventCollection
-from osid_service import OSIDService
-import event_output
+from allocation_pipeline.event_connection import AnnotationEventDB
+from allocation_pipeline.annotation_events import EventCollection
+from allocation_pipeline.osid_service import OSIDService
+from allocation_pipeline.event_output import GFFAnnotations, AnnotationEventFile
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from session_service import rest_api
 
 
 def get_database_connection(config,
@@ -49,7 +53,23 @@ if __name__ == '__main__':
     osid_service = OSIDService(allocation_config)
     event_collection = EventCollection(organism_production_name, event_connection, osid_service)
     event_collection.create()
-    gff_annotation = event_output.GFFAnnotations(input_gff_path, output_gff_path, event_collection)
+
+    base = automap_base()
+    engine = create_engine(session_database.database_url)
+    base.prepare(engine, reflect=True)
+    session = Session(engine)
+
+
+    assigning_application = rest_api.AssigningApplication(self.base, self.engine)
+    application_id = rest_api.assigning_application.get(name=name, version=version)
+
+    production_database = rest_api.ProductionDatabase(self.base, self.engine)
+    production_database_id = production_database.post(name='core_test_database_02')
+
+
+
+
+    gff_annotation = GFFAnnotations(input_gff_path, output_gff_path, event_collection)
     gff_annotation.annotate_gff()
-    event_file = event_output.AnnotationEventFile(event_collection, event_file_path)
+    event_file = AnnotationEventFile(event_collection, event_file_path)
     event_file.write_event_file()

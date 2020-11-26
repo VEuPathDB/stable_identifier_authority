@@ -13,12 +13,15 @@ limitations under the License.
 """
 
 """module for all genomic feature classes"""
+
+
 class Feature:
     """Base class for genomic features holding stable identifier"""
 
     def __init__(self, model, index):
         self.source_id = str()
         self.allocated_id = str()
+        self.osid_id = int
         self.ancestors = list()
         self.setup_model(model)
         self._register_my_self(index)
@@ -53,6 +56,7 @@ class ProteinCodingGene(Feature):
             if len(transcripts) != len(self.mrnas):
                 return False
             for index, mrna in enumerate(self.mrnas):
+                mrna.osid_id = self.osid_id
                 mrna.set_allocated_id((transcripts[index], translations[index]))
 
 

@@ -101,3 +101,7 @@ class AnnotationEventFile:
                                                        + "\t" + event_type + "\t" + ancestor.source_id + "\n")
 
         self.file_handle.close()
+
+
+class SessionDataBase:
+    pass
