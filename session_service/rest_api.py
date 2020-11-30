@@ -11,15 +11,36 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
+import configparser
 from sqlalchemy.orm import Session as SqlSession
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy import create_engine
+
+
+class DataBaseConnection:
+
+    def __init__(self, config_file):
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        self.db_name = config['DataBase']['db_name']
+        self.db_host = config['DataBase']['db_host']
+        self.db_user = config['DataBase']['db_user']
+        self.db_pass = config['DataBase']['db_pass']
+
+        self.database_url = "mysql+pymysql://{}:{}@{}/{}".format(self.db_user, self.db_pass, self.db_host, self.db_name)
+
+        self.base = automap_base()
+        self.engine = create_engine(self.database_url)
+        self.base.prepare(self.engine, reflect=True)
 
 
 class AssigningApplication:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.assigning_application = sql_alchemy_base.classes.assigning_application
-        self.sql_session = SqlSession(sql_alchemy_engine)
+    def __init__(self, database_connection):
+        self.assigning_application = database_connection.base.classes.assigning_application
+        self.sql_session = SqlSession(database_connection.engine)
 
     def __del__(self):
             self.sql_session.close()
@@ -77,9 +98,9 @@ class AssigningApplication:
 
 class ProductionDatabase:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.production_database = sql_alchemy_base.classes.production_database
-        self.sql_session = SqlSession(sql_alchemy_engine)
+    def __init__(self, database_connection):
+        self.production_database = database_connection.base.classes.production_database
+        self.sql_session = SqlSession(database_connection.engine)
 
     def __del__(self):
         self.sql_session.close()
@@ -131,9 +152,9 @@ class ProductionDatabase:
 
 class Session:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.session_table = sql_alchemy_base.classes.session
-        self.sql_session = SqlSession(sql_alchemy_engine)
+    def __init__(self, database_connection):
+        self.session_table = database_connection.base.classes.session
+        self.sql_session = SqlSession(database_connection.engine)
 
     def __del__(self):
         self.sql_session.close()
@@ -141,8 +162,15 @@ class Session:
     def get(self, **kwargs):
         if 'session_id' in kwargs:
             result = self.sql_session.query(self.session_table).get(kwargs['session_id'])
-            return result.ses_application_id, result.ses_production_database_id, result.osid_idsetid,\
-                result.data_check, result.message, result.creation_date
+            if result is not None:
+                return result.ses_application_id, result.ses_production_database_id, result.osid_idsetid,\
+                    result.data_check, result.message, result.creation_date
+            else:
+                return False
+        elif 'osid_idsetid' in kwargs:
+            result = self.sql_session.query(self.session_table).get(kwargs['osid_idsetid'])
+            if result is not None:
+                return result.session_id
         else:
             return False  # 400 Bad Request
 
@@ -182,9 +210,9 @@ class Session:
 
 class SessionIdentifierAction:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.session_identifier_action = sql_alchemy_base.classes.session_identifier_action
-        self.sql_session = SqlSession(sql_alchemy_engine)
+    def __init__(self, database_connection):
+        self.session_identifier_action = database_connection.base.classes.session_identifier_action
+        self.sql_session = SqlSession(database_connection.engine)
 
     def __del__(self):
         self.sql_session.close()
@@ -232,9 +260,9 @@ class SessionIdentifierAction:
 
 class StableIdentifierRecord:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.stable_identifier_record = sql_alchemy_base.classes.stable_identifier_record
-        self.sql_session = SqlSession(sql_alchemy_engine)
+    def __init__(self, database_connection):
+        self.stable_identifier_record = database_connection.base.classes.stable_identifier_record
+        self.sql_session = SqlSession(database_connection.engine)
 
     def __del__(self):
         self.sql_session.close()
