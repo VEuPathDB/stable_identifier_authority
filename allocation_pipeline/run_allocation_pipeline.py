@@ -17,11 +17,8 @@ import configparser
 from allocation_pipeline.event_connection import AnnotationEventDB
 from allocation_pipeline.annotation_events import EventCollection
 from allocation_pipeline.osid_service import OSIDService
-from allocation_pipeline.event_output import GFFAnnotations, AnnotationEventFile
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-from session_service import rest_api
+from allocation_pipeline.event_output import GFFAnnotations, AnnotationEventFile, SessionService
+from session_service.rest_api import DataBaseConnection, AssigningApplication, ProductionDatabase
 
 
 def get_database_connection(config,
@@ -42,10 +39,13 @@ if __name__ == '__main__':
     allocation_config = configparser.ConfigParser()
     allocation_config.read(allocation_config_file)
 
+    pipeline_name = allocation_config['PIPELINE']['name']
+    pipeline_version = allocation_config['PIPELINE']['version']
     input_gff_path = allocation_config['FILE']['input_gff']
     output_gff_path = allocation_config['FILE']['output_gff']
     event_file_path = allocation_config['FILE']['event']
     organism_production_name = allocation_config['ProductionOrganism']['name']
+    production_database_name = allocation_config['ProductionOrganism']['database']
 
     db_connection = get_database_connection(allocation_config)
 
@@ -54,20 +54,12 @@ if __name__ == '__main__':
     event_collection = EventCollection(organism_production_name, event_connection, osid_service)
     event_collection.create()
 
-    base = automap_base()
-    engine = create_engine(session_database.database_url)
-    base.prepare(engine, reflect=True)
-    session = Session(engine)
-
-
-    assigning_application = rest_api.AssigningApplication(self.base, self.engine)
-    application_id = rest_api.assigning_application.get(name=name, version=version)
-
-    production_database = rest_api.ProductionDatabase(self.base, self.engine)
-    production_database_id = production_database.post(name='core_test_database_02')
-
-
-
+    session_database = DataBaseConnection()
+    assigning_application = AssigningApplication(session_database)
+    application_id = assigning_application.get(name=pipeline_name, version=pipeline_version)
+    production_database = ProductionDatabase(session_database)
+    production_database_id = production_database.post(name=production_database_name)
+    session_service = SessionService(session_database, application_id, production_database_id, event_collection)
 
     gff_annotation = GFFAnnotations(input_gff_path, output_gff_path, event_collection)
     gff_annotation.annotate_gff()

@@ -13,6 +13,7 @@ limitations under the License.
 """
 
 import re
+from session_service import rest_api
 """module of classes that format the event into different outputs """
 
 
@@ -103,5 +104,33 @@ class AnnotationEventFile:
         self.file_handle.close()
 
 
-class SessionDataBase:
-    pass
+class SessionService:
+
+    def __init__(self, session_database, application_id, production_database_id, commit_message, event_collection):
+        self.database = session_database
+        self.application_id = application_id
+        self.production_database_id = production_database_id
+        self.commit_message = commit_message
+        self.event_collection = event_collection
+        self.stable_identifier_record = rest_api.StableIdentifierRecord(self.database)
+        self.session_identifier_action = rest_api.SessionIdentifierAction(self.database)
+        self.session_table = rest_api.Session(self.database)
+
+        for annotation_event_type in self.event_collection.annotation_event_list:
+
+            for event in annotation_event_type.event_list:
+                for gene in event:
+                    if gene.source_id != 'reference':
+
+                        session_id = self.session_table.get(osid_idsetid=gene.osid_id)
+                        if not session_id:
+                            session_id = self.session_table.post(application_id=application_id,
+                                                                 production_database_id=production_database_id,
+                                                                 osid_idsetid=gene.osid_id, message=self.commit_message)
+
+                        stable_identifier_record_id = self.stable_identifier_record.post(
+                            stable_identifier=gene.allocated_id, status='current', feature_type='gene')
+
+                        _ = self.session_identifier_action.post(
+                            stable_identifier_record_id=stable_identifier_record_id,
+                            session_id=session_id, action='create')
