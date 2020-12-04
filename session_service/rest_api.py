@@ -56,8 +56,9 @@ class AssigningApplication:
         elif 'name' in kwargs and 'version' in kwargs:
             result = self.sql_session.query(self.assigning_application).filter(
                 self.assigning_application.name == kwargs['name'],
-                self.assigning_application.version == kwargs['version'])
-            return result[0].application_id
+                self.assigning_application.version == kwargs['version']).first()
+            if result is not None:
+                return result.application_id
         else:
             return False  # 400 Bad Request
 
@@ -70,6 +71,7 @@ class AssigningApplication:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_application.application_id
         else:
@@ -87,6 +89,7 @@ class AssigningApplication:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -112,6 +115,13 @@ class ProductionDatabase:
                 return result.name
             else:
                 return False
+        elif 'name' in kwargs:
+            result = self.sql_session.query(self.production_database).\
+                filter(self.production_database.name == kwargs['name']).first()
+            if result is not None:
+                return result.production_database_id
+            else:
+                return False
         else:
             return False  # 400 Bad Request
 
@@ -123,6 +133,7 @@ class ProductionDatabase:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_database.production_database_id
         else:
@@ -141,6 +152,7 @@ class ProductionDatabase:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -168,9 +180,12 @@ class Session:
             else:
                 return False
         elif 'osid_idsetid' in kwargs:
-            result = self.sql_session.query(self.session_table).get(kwargs['osid_idsetid'])
+            result = self.sql_session.query(self.session_table)\
+                .filter(self.session_table.osid_idsetid == kwargs['osid_idsetid']).first()
             if result is not None:
                 return result.session_id
+            else:
+                return False
         else:
             return False  # 400 Bad Request
 
@@ -185,6 +200,7 @@ class Session:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_session.session_id
         else:
@@ -199,6 +215,7 @@ class Session:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -235,6 +252,7 @@ class SessionIdentifierAction:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_session_identifier_action.session_identifier_action_id
         else:
@@ -249,6 +267,7 @@ class SessionIdentifierAction:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -284,6 +303,7 @@ class StableIdentifierRecord:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_stable_identifier_record.stable_identifier_record_id
         else:
@@ -298,6 +318,7 @@ class StableIdentifierRecord:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request

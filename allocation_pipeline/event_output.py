@@ -112,25 +112,30 @@ class SessionService:
         self.production_database_id = production_database_id
         self.commit_message = commit_message
         self.event_collection = event_collection
-        self.stable_identifier_record = rest_api.StableIdentifierRecord(self.database)
-        self.session_identifier_action = rest_api.SessionIdentifierAction(self.database)
         self.session_table = rest_api.Session(self.database)
-
         for annotation_event_type in self.event_collection.annotation_event_list:
 
             for event in annotation_event_type.event_list:
                 for gene in event:
-                    if gene.source_id != 'reference':
+                    if gene.source_id != 'reference' and gene.allocated_id:
+                        self.add_feature(gene, 'gene')
+                        for mrna in gene.mrnas:
+                            self.add_feature(mrna, 'transcript')
 
-                        session_id = self.session_table.get(osid_idsetid=gene.osid_id)
-                        if not session_id:
-                            session_id = self.session_table.post(application_id=application_id,
-                                                                 production_database_id=production_database_id,
-                                                                 osid_idsetid=gene.osid_id, message=self.commit_message)
+    def add_feature(self, feature, feature_type):
+        session_id = self.session_table.get(osid_idsetid=feature.osid_id)
 
-                        stable_identifier_record_id = self.stable_identifier_record.post(
-                            stable_identifier=gene.allocated_id, status='current', feature_type='gene')
+        if not session_id:
+            session_id = self.session_table.post(
+                application_id=self.application_id, production_database_id=self.production_database_id,
+                osid_idsetid=feature.osid_id, message=self.commit_message)
 
-                        _ = self.session_identifier_action.post(
-                            stable_identifier_record_id=stable_identifier_record_id,
-                            session_id=session_id, action='create')
+        stable_identifier_record = rest_api.StableIdentifierRecord(self.database)
+        stable_identifier_record_id = stable_identifier_record.post(
+                stable_identifier=feature.allocated_id, status='current', feature_type=feature_type)
+        if stable_identifier_record_id:
+            session_identifier_action = rest_api.SessionIdentifierAction(self.database)
+            _ = session_identifier_action.post(
+                    stable_identifier_record_id=stable_identifier_record_id, session_id=session_id, action='create')
+        else:
+            print('NOT loaded: ', feature.allocated_id)

@@ -63,6 +63,8 @@ class RestTestCase(unittest.TestCase):
         production_database_id = production_database.post(name='core_test_database')
         database_name = production_database.get(production_database_id=production_database_id)
         self.assertEqual('core_test_database', database_name)
+        result = production_database.get(name='core_test_database')
+        print(result)
         database_name_2 = production_database.get(production_database_id=100000)
         self.assertEqual(False, database_name_2)
         result_1 = production_database.patch(production_database_id=production_database_id, name='new_data_base_name')

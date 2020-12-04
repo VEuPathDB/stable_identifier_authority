@@ -35,12 +35,14 @@ def get_database_connection(config,
 
 
 if __name__ == '__main__':
-    allocation_config_file = './allocation_pipeline.conf'
+    allocation_config_file = './allocation_pipeline/allocation_pipeline.conf'
+    session_config_file = './session_service/session_service.conf'
     allocation_config = configparser.ConfigParser()
     allocation_config.read(allocation_config_file)
 
     pipeline_name = allocation_config['PIPELINE']['name']
     pipeline_version = allocation_config['PIPELINE']['version']
+    commit_message = allocation_config['PIPELINE']['message']
     input_gff_path = allocation_config['FILE']['input_gff']
     output_gff_path = allocation_config['FILE']['output_gff']
     event_file_path = allocation_config['FILE']['event']
@@ -54,12 +56,17 @@ if __name__ == '__main__':
     event_collection = EventCollection(organism_production_name, event_connection, osid_service)
     event_collection.create()
 
-    session_database = DataBaseConnection()
+    session_database = DataBaseConnection(session_config_file)
     assigning_application = AssigningApplication(session_database)
     application_id = assigning_application.get(name=pipeline_name, version=pipeline_version)
     production_database = ProductionDatabase(session_database)
-    production_database_id = production_database.post(name=production_database_name)
-    session_service = SessionService(session_database, application_id, production_database_id, event_collection)
+    production_database_id = production_database.get(name=production_database_name)
+
+    if not production_database_id:
+        production_database_id = production_database.post(name=production_database_name)
+
+    session_service = SessionService(session_database, application_id, production_database_id,
+                                     commit_message, event_collection)
 
     gff_annotation = GFFAnnotations(input_gff_path, output_gff_path, event_collection)
     gff_annotation.annotate_gff()

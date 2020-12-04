@@ -127,6 +127,7 @@ class EditOnlyEvent(AnnotationEvent):
         organism_id = self.stable_id_service.get_organism_id(self.organism_name)
         id_set_id, _ = self.stable_id_service.get_gene_id(organism_id, 0)
         reference_gene = None
+        transcript_patch = list()
         for created_gene in self.created_genes:
             event = self.gene_event_index[created_gene.source_id]
             for gene in event:
@@ -134,8 +135,9 @@ class EditOnlyEvent(AnnotationEvent):
                     reference_gene = gene
             created_gene.osid_id = id_set_id
             created_gene.allocated_id = reference_gene.source_id
+            self.allocated_index[created_gene.allocated_id] = created_gene
             transcript_number = len(created_gene.mrnas)
-            transcript_patch = list()
+
             transcript_patch.append({'geneId': created_gene.allocated_id, 'transcripts': transcript_number})
-            gene_model = self.stable_id_service.get_transcripts(id_set_id, transcript_patch)
-            created_gene.update_transcripts(gene_model[0]['transcripts'], gene_model[0]['proteins'])
+        gene_model = self.stable_id_service.get_transcripts(id_set_id, transcript_patch)
+        self._allocate_to_transcript(gene_model)
