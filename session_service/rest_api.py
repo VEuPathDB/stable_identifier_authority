@@ -26,10 +26,12 @@ class DataBaseConnection:
         config.read(config_file)
         self.db_name = config['DataBase']['db_name']
         self.db_host = config['DataBase']['db_host']
+        self.db_port = config['DataBase']['db_port']
         self.db_user = config['DataBase']['db_user']
         self.db_pass = config['DataBase']['db_pass']
 
-        self.database_url = "mysql+pymysql://{}:{}@{}/{}".format(self.db_user, self.db_pass, self.db_host, self.db_name)
+        self.database_url = "mysql+pymysql://{}:{}@{}:{}/{}".format(self.db_user, self.db_pass, self.db_host,
+                                                                    self.db_port, self.db_name)
 
         self.base = automap_base()
         self.engine = create_engine(self.database_url)
