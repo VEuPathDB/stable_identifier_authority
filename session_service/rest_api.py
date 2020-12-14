@@ -44,9 +44,6 @@ class AssigningApplication:
         self.assigning_application = database_connection.base.classes.assigning_application
         self.sql_session = SqlSession(database_connection.engine)
 
-    def __del__(self):
-            self.sql_session.close()
-
     def get(self, **kwargs):
 
         if 'application_id' in kwargs:
@@ -106,9 +103,6 @@ class ProductionDatabase:
     def __init__(self, database_connection):
         self.production_database = database_connection.base.classes.production_database
         self.sql_session = SqlSession(database_connection.engine)
-
-    def __del__(self):
-        self.sql_session.close()
 
     def get(self, **kwargs):
         if 'production_database_id' in kwargs:
@@ -170,9 +164,6 @@ class Session:
         self.session_table = database_connection.base.classes.session
         self.sql_session = SqlSession(database_connection.engine)
 
-    def __del__(self):
-        self.sql_session.close()
-
     def get(self, **kwargs):
         if 'session_id' in kwargs:
             result = self.sql_session.query(self.session_table).get(kwargs['session_id'])
@@ -233,9 +224,6 @@ class SessionIdentifierAction:
         self.session_identifier_action = database_connection.base.classes.session_identifier_action
         self.sql_session = SqlSession(database_connection.engine)
 
-    def __del__(self):
-        self.sql_session.close()
-
     def get(self, **kwargs):
         if 'session_identifier_action_id' in kwargs:
             result = self.sql_session.query(self.session_identifier_action).get(kwargs['session_identifier_action_id'])
@@ -284,9 +272,6 @@ class StableIdentifierRecord:
     def __init__(self, database_connection):
         self.stable_identifier_record = database_connection.base.classes.stable_identifier_record
         self.sql_session = SqlSession(database_connection.engine)
-
-    def __del__(self):
-        self.sql_session.close()
 
     def get(self, **kwargs):
         if 'stable_identifier_record_id' in kwargs:
