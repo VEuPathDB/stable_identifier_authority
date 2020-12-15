@@ -85,7 +85,7 @@ class RestTestCase(unittest.TestCase):
         session_id = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=1, message="this is a session test")
         result, _, _, _, _, _ = session_table.get(session_id=session_id)
         self.assertEqual(application_id, result)
-        result = session_table.get(osid_idsetid=4)
+        result = session_table.get(osid_idsetid=1)
         print(result)
         self.assertEqual(session_id, result)
         _ = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=2, message="this is a second session test")
@@ -116,7 +116,7 @@ class RestTestCase(unittest.TestCase):
         production_database = rest_api.ProductionDatabase(self.connection)
         production_database_id = production_database.post(name='core_test_database_05')
         session_table = rest_api.Session(self.connection)
-        session_id = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=None, message="this is a action test")
+        session_id = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=10, message="this is a action test")
         session_identifier_action_id = session_identifier_action.post(stable_identifier_record_id=stable_identifier_record_id, session_id=session_id,
                                                                       action='create')
         record_id, ses_id, action = session_identifier_action.get(session_identifier_action_id=session_identifier_action_id)
