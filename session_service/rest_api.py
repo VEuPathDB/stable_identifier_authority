@@ -1,15 +1,48 @@
+"""
+Copyright [2019-2020] EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+     http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
+import configparser
 from sqlalchemy.orm import Session as SqlSession
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy import create_engine
+
+
+class DataBaseConnection:
+
+    def __init__(self, config_file):
+        config = configparser.ConfigParser()
+        config.read(config_file)
+        self.db_name = config['DataBase']['db_name']
+        self.db_host = config['DataBase']['db_host']
+        self.db_port = config['DataBase']['db_port']
+        self.db_user = config['DataBase']['db_user']
+        self.db_pass = config['DataBase']['db_pass']
+
+        self.database_url = "mysql+pymysql://{}:{}@{}:{}/{}".format(self.db_user, self.db_pass, self.db_host,
+                                                                    self.db_port, self.db_name)
+
+        self.base = automap_base()
+        self.engine = create_engine(self.database_url)
+        self.base.prepare(self.engine, reflect=True)
 
 
 class AssigningApplication:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.assigning_application = sql_alchemy_base.classes.assigning_application
-        self.sql_session = SqlSession(sql_alchemy_engine)
-
-    def __del__(self):
-            self.sql_session.close()
+    def __init__(self, database_connection):
+        self.assigning_application = database_connection.base.classes.assigning_application
+        self.sql_session = SqlSession(database_connection.engine)
 
     def get(self, **kwargs):
 
@@ -22,8 +55,9 @@ class AssigningApplication:
         elif 'name' in kwargs and 'version' in kwargs:
             result = self.sql_session.query(self.assigning_application).filter(
                 self.assigning_application.name == kwargs['name'],
-                self.assigning_application.version == kwargs['version'])
-            return result[0].application_id
+                self.assigning_application.version == kwargs['version']).first()
+            if result is not None:
+                return result.application_id
         else:
             return False  # 400 Bad Request
 
@@ -36,6 +70,7 @@ class AssigningApplication:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_application.application_id
         else:
@@ -53,6 +88,7 @@ class AssigningApplication:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -64,18 +100,22 @@ class AssigningApplication:
 
 class ProductionDatabase:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.production_database = sql_alchemy_base.classes.production_database
-        self.sql_session = SqlSession(sql_alchemy_engine)
-
-    def __del__(self):
-        self.sql_session.close()
+    def __init__(self, database_connection):
+        self.production_database = database_connection.base.classes.production_database
+        self.sql_session = SqlSession(database_connection.engine)
 
     def get(self, **kwargs):
         if 'production_database_id' in kwargs:
             result = self.sql_session.query(self.production_database).get(kwargs['production_database_id'])
             if result is not None:
                 return result.name
+            else:
+                return False
+        elif 'name' in kwargs:
+            result = self.sql_session.query(self.production_database).\
+                filter(self.production_database.name == kwargs['name']).first()
+            if result is not None:
+                return result.production_database_id
             else:
                 return False
         else:
@@ -89,6 +129,7 @@ class ProductionDatabase:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_database.production_database_id
         else:
@@ -107,6 +148,7 @@ class ProductionDatabase:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -118,18 +160,25 @@ class ProductionDatabase:
 
 class Session:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.session_table = sql_alchemy_base.classes.session
-        self.sql_session = SqlSession(sql_alchemy_engine)
-
-    def __del__(self):
-        self.sql_session.close()
+    def __init__(self, database_connection):
+        self.session_table = database_connection.base.classes.session
+        self.sql_session = SqlSession(database_connection.engine)
 
     def get(self, **kwargs):
         if 'session_id' in kwargs:
             result = self.sql_session.query(self.session_table).get(kwargs['session_id'])
-            return result.ses_application_id, result.ses_production_database_id, result.osid_idsetid,\
-                result.data_check, result.message, result.creation_date
+            if result is not None:
+                return result.ses_application_id, result.ses_production_database_id, result.osid_idsetid,\
+                    result.data_check, result.message, result.creation_date
+            else:
+                return False
+        elif 'osid_idsetid' in kwargs:
+            result = self.sql_session.query(self.session_table)\
+                .filter(self.session_table.osid_idsetid == kwargs['osid_idsetid']).first()
+            if result is not None:
+                return result.session_id
+            else:
+                return False
         else:
             return False  # 400 Bad Request
 
@@ -144,6 +193,7 @@ class Session:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_session.session_id
         else:
@@ -158,6 +208,7 @@ class Session:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -169,9 +220,9 @@ class Session:
 
 class SessionIdentifierAction:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.session_identifier_action = sql_alchemy_base.classes.session_identifier_action
-        self.sql_session = SqlSession(sql_alchemy_engine)
+    def __init__(self, database_connection):
+        self.session_identifier_action = database_connection.base.classes.session_identifier_action
+        self.sql_session = SqlSession(database_connection.engine)
 
     def __del__(self):
         self.sql_session.close()
@@ -186,13 +237,15 @@ class SessionIdentifierAction:
     def post(self, **kwargs):
         if 'stable_identifier_record_id' in kwargs and 'session_id' in kwargs and 'action' in kwargs:
             new_session_identifier_action = self.session_identifier_action(
-                sia_stable_identifier_record_id=kwargs['stable_identifier_record_id'], sia_session_id=kwargs['session_id'],
+                sia_stable_identifier_record_id=kwargs['stable_identifier_record_id'],
+                sia_session_id=kwargs['session_id'],
                 action=kwargs['action'])
             self.sql_session.add(new_session_identifier_action)
             try:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_session_identifier_action.session_identifier_action_id
         else:
@@ -207,6 +260,7 @@ class SessionIdentifierAction:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request
@@ -218,9 +272,9 @@ class SessionIdentifierAction:
 
 class StableIdentifierRecord:
 
-    def __init__(self, sql_alchemy_base, sql_alchemy_engine):
-        self.stable_identifier_record = sql_alchemy_base.classes.stable_identifier_record
-        self.sql_session = SqlSession(sql_alchemy_engine)
+    def __init__(self, database_connection):
+        self.stable_identifier_record = database_connection.base.classes.stable_identifier_record
+        self.sql_session = SqlSession(database_connection.engine)
 
     def __del__(self):
         self.sql_session.close()
@@ -242,6 +296,7 @@ class StableIdentifierRecord:
                 self.sql_session.commit()
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
             return new_stable_identifier_record.stable_identifier_record_id
         else:
@@ -256,6 +311,7 @@ class StableIdentifierRecord:
                 return True
             except SQLAlchemyError as mysql_error:
                 print(mysql_error.__str__())
+                self.sql_session.rollback()
                 return False
         else:
             return False  # 400 Bad Request

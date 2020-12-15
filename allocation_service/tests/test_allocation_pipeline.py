@@ -1,8 +1,8 @@
 import unittest
-from annotation_events import EventCollection, AnnotationEvent
-from event_output import AnnotationEventFile
-import genomic_features
-from event_output import GFFAnnotations
+from allocation_service.annotation_events import EventCollection, AnnotationEvent
+from allocation_service.event_output import AnnotationEventFile
+from allocation_service.genomic_features import ProteinCodingGene, Feature
+from allocation_service.event_output import GFFAnnotations
 
 
 class OSIDService:
@@ -121,14 +121,14 @@ class FeatureTestCase(unittest.TestCase):
         index = dict()
         model = {"id": "ABCD00001", "version": 1, "children": [{"id": "ABCD00001_R0001",
                                                                 "children": [{"id": "ABCD00001_P0001", "version": 2}]}]}
-        feature = genomic_features.Feature(model, index)
+        feature = Feature(model, index)
         self.assertEqual("ABCD00001", feature.source_id)
 
     def test_gene(self):
         index = dict()
         model = {"source": "apollo", "id": "ABCD00001", "children": [{"id": "ABCD00001_R0001", "version": 2,
                                                                       "children": [{"id": "ABCD00001_P0001", "version": 2}]}]}
-        gene = genomic_features.ProteinCodingGene(model, index)
+        gene = ProteinCodingGene(model, index)
         self.assertEqual("ABCD00001", gene.source_id)
         self.assertEqual(1, len(gene.mrnas))
         mrna = gene.mrnas[0]

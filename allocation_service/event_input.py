@@ -67,4 +67,4 @@ class AnnotationEventDB:
 
         with self.db_connection.cursor() as cursor:
             cursor.execute(sql, values)
-        return cursor.fetchall()
+            return cursor.fetchall()

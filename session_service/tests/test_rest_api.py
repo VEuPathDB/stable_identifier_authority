@@ -1,16 +1,13 @@
 import unittest
 import configparser
 import pymysql.cursors
-from sqlalchemy.ext.automap import automap_base
-from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
-import rest_api
+from session_service import rest_api
 
 
 class SetUpTestDatabase:
 
-    def __init__(self):
-        config_file = '../session_service.conf'
+    def __init__(self, config_file):
+
         config = configparser.ConfigParser()
         config.read(config_file)
         self.db_name = config['DataBase']['db_name']
@@ -19,7 +16,6 @@ class SetUpTestDatabase:
         self.db_pass = config['DataBase']['db_pass']
         self.connection = pymysql.connect(host=self.db_host, user=self.db_user, password=self.db_pass, db=self.db_name,
                                           charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
-        self.database_url = "mysql+pymysql://{}:{}@{}/{}".format(self.db_user, self.db_pass, self.db_host, self.db_name)
 
     def truncate_database(self):
         with self.connection.cursor() as cursor:
@@ -39,15 +35,13 @@ class RestTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        test_database = SetUpTestDatabase()
+        config_file = '../session_service.conf'
+        test_database = SetUpTestDatabase(config_file)
         test_database.truncate_database()
-        cls.base = automap_base()
-        cls.engine = create_engine(test_database.database_url)
-        cls.base.prepare(cls.engine, reflect=True)
-        cls.session = Session(cls.engine)
+        cls.connection = rest_api.DataBaseConnection(config_file)
 
     def test_AssigningApplication(self):
-        assigning_application = rest_api.AssigningApplication(self.base, self.engine)
+        assigning_application = rest_api.AssigningApplication(self.connection)
         application_id = assigning_application.post(name='test_application_01', version=1, description='this is a test application')
         name, version, description = assigning_application.get(application_id=application_id)
         self.assertEqual(('test_application_01', 1, 'this is a test application'), (name, version, description))
@@ -65,10 +59,12 @@ class RestTestCase(unittest.TestCase):
         self.assertEqual(False, result_3)
 
     def test_ProductionDatabase(self):
-        production_database = rest_api.ProductionDatabase(self.base, self.engine)
+        production_database = rest_api.ProductionDatabase(self.connection)
         production_database_id = production_database.post(name='core_test_database')
         database_name = production_database.get(production_database_id=production_database_id)
         self.assertEqual('core_test_database', database_name)
+        result = production_database.get(name='core_test_database')
+        print(result)
         database_name_2 = production_database.get(production_database_id=100000)
         self.assertEqual(False, database_name_2)
         result_1 = production_database.patch(production_database_id=production_database_id, name='new_data_base_name')
@@ -81,15 +77,18 @@ class RestTestCase(unittest.TestCase):
         self.assertEqual(False, result_4)
 
     def test_Session(self):
-        assigning_application = rest_api.AssigningApplication(self.base, self.engine)
+        assigning_application = rest_api.AssigningApplication(self.connection)
         application_id = assigning_application.post(name='test_application_02', version=1, description='this is a test application')
-        production_database = rest_api.ProductionDatabase(self.base, self.engine)
+        production_database = rest_api.ProductionDatabase(self.connection)
         production_database_id = production_database.post(name='core_test_database_02')
-        session_table = rest_api.Session(self.base, self.engine)
-        session_id = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=None, message="this is a session test")
+        session_table = rest_api.Session(self.connection)
+        session_id = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=1, message="this is a session test")
         result, _, _, _, _, _ = session_table.get(session_id=session_id)
         self.assertEqual(application_id, result)
-        _ = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=1, message="this is a second session test")
+        result = session_table.get(osid_idsetid=4)
+        print(result)
+        self.assertEqual(session_id, result)
+        _ = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=2, message="this is a second session test")
         #session_id_02 = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=1, message="this is a test")
         #self.assertEqual(False, session_id_02)
         result_1 = session_table.patch(session_id=session_id, data_check='pass')
@@ -98,7 +97,7 @@ class RestTestCase(unittest.TestCase):
         self.assertEqual(False, result_3)
 
     def test_StableIdentifierRecord(self):
-        stable_identifier_record = rest_api.StableIdentifierRecord(self.base, self.engine)
+        stable_identifier_record = rest_api.StableIdentifierRecord(self.connection)
         stable_identifier_record_id = stable_identifier_record.post(stable_identifier='AGAP000001', status='current',
                                                                     feature_type='gene')
         stable_identifier, status, feature_type = stable_identifier_record.get(stable_identifier_record_id=stable_identifier_record_id)
@@ -109,14 +108,14 @@ class RestTestCase(unittest.TestCase):
         self.assertEqual(False, result_2)
 
     def test_session_identifier_action(self):
-        session_identifier_action = rest_api.SessionIdentifierAction(self.base, self.engine)
-        stable_identifier_record = rest_api.StableIdentifierRecord(self.base, self.engine)
+        session_identifier_action = rest_api.SessionIdentifierAction(self.connection)
+        stable_identifier_record = rest_api.StableIdentifierRecord(self.connection)
         stable_identifier_record_id = stable_identifier_record.post(stable_identifier='AGAP000002', status='current', feature_type='gene')
-        assigning_application = rest_api.AssigningApplication(self.base, self.engine)
+        assigning_application = rest_api.AssigningApplication(self.connection)
         application_id = assigning_application.post(name='test_application_05', version=1, description='this is a test application')
-        production_database = rest_api.ProductionDatabase(self.base, self.engine)
+        production_database = rest_api.ProductionDatabase(self.connection)
         production_database_id = production_database.post(name='core_test_database_05')
-        session_table = rest_api.Session(self.base, self.engine)
+        session_table = rest_api.Session(self.connection)
         session_id = session_table.post(application_id=application_id, production_database_id=production_database_id, osid_idsetid=None, message="this is a action test")
         session_identifier_action_id = session_identifier_action.post(stable_identifier_record_id=stable_identifier_record_id, session_id=session_id,
                                                                       action='create')

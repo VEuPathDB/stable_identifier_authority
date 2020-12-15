@@ -4,6 +4,10 @@ db_host=
 db_port=
 db_user=
 db_pass=
+[PIPELINE]
+name=
+version=
+message=
 [OSID]
 url=
 user=
@@ -12,3 +16,6 @@ pass=
 input_gff=
 output_gff=
 event=
+[ProductionOrganism]
+name=
+database=
