@@ -14,10 +14,10 @@ limitations under the License.
 
 import pymysql.cursors
 import configparser
-from allocation_pipeline.event_connection import AnnotationEventDB
-from allocation_pipeline.annotation_events import EventCollection
-from allocation_pipeline.osid_service import OSIDService
-from allocation_pipeline.event_output import GFFAnnotations, AnnotationEventFile, SessionService
+from allocation_service.event_input import AnnotationEventDB
+from allocation_service.annotation_events import EventCollection
+from allocation_service.osid_service import OSIDService
+from allocation_service.event_output import GFFAnnotations, AnnotationEventFile, SessionService
 from session_service.rest_api import DataBaseConnection, AssigningApplication, ProductionDatabase
 
 
@@ -35,7 +35,7 @@ def get_database_connection(config,
 
 
 if __name__ == '__main__':
-    allocation_config_file = './allocation_pipeline/allocation_pipeline.conf'
+    allocation_config_file = './allocation_service/allocation_pipeline.conf'
     session_config_file = './session_service/session_service.conf'
     allocation_config = configparser.ConfigParser()
     allocation_config.read(allocation_config_file)
@@ -51,9 +51,9 @@ if __name__ == '__main__':
 
     db_connection = get_database_connection(allocation_config)
 
-    event_connection = AnnotationEventDB(db_connection)
+    event_input = AnnotationEventDB(db_connection)
     osid_service = OSIDService(allocation_config)
-    event_collection = EventCollection(organism_production_name, event_connection, osid_service)
+    event_collection = EventCollection(organism_production_name, event_input, osid_service)
     event_collection.create()
 
     session_database = DataBaseConnection(session_config_file)
