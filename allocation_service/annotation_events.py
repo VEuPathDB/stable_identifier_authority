@@ -12,7 +12,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from allocation_pipeline.genomic_features import ProteinCodingGene
+from allocation_service.genomic_features import ProteinCodingGene
 """module for classes handling annotation events. An event is a change to a locus with one or more overlapping genes"""
 
 

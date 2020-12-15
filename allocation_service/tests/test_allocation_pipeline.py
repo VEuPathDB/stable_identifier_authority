@@ -1,8 +1,8 @@
 import unittest
-from allocation_pipeline.annotation_events import EventCollection, AnnotationEvent
-from allocation_pipeline.event_output import AnnotationEventFile
-from allocation_pipeline.genomic_features import ProteinCodingGene, Feature
-from allocation_pipeline.event_output import GFFAnnotations
+from allocation_service.annotation_events import EventCollection, AnnotationEvent
+from allocation_service.event_output import AnnotationEventFile
+from allocation_service.genomic_features import ProteinCodingGene, Feature
+from allocation_service.event_output import GFFAnnotations
 
 
 class OSIDService:

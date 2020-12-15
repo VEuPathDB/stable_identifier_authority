@@ -224,6 +224,9 @@ class SessionIdentifierAction:
         self.session_identifier_action = database_connection.base.classes.session_identifier_action
         self.sql_session = SqlSession(database_connection.engine)
 
+    def __del__(self):
+        self.sql_session.close()
+
     def get(self, **kwargs):
         if 'session_identifier_action_id' in kwargs:
             result = self.sql_session.query(self.session_identifier_action).get(kwargs['session_identifier_action_id'])
@@ -272,6 +275,9 @@ class StableIdentifierRecord:
     def __init__(self, database_connection):
         self.stable_identifier_record = database_connection.base.classes.stable_identifier_record
         self.sql_session = SqlSession(database_connection.engine)
+
+    def __del__(self):
+        self.sql_session.close()
 
     def get(self, **kwargs):
         if 'stable_identifier_record_id' in kwargs:
