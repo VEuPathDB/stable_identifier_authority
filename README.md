@@ -12,7 +12,7 @@ The allocation service can extraxt gene model event information from the output 
 ### Usage
 To setup the allocation service each organsim needs a allocation_pipeline.conf. The session_service.conf needs connection infromation for the session service database. 
 
-####To run the software:
+#### To run the software:
 
   python3 run_allocation_pipeline.py
 
