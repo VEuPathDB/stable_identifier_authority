@@ -14,6 +14,7 @@ limitations under the License.
 
 import pymysql.cursors
 import configparser
+import sys
 from allocation_service.event_input import AnnotationEventDB
 from allocation_service.annotation_events import EventCollection
 from allocation_service.osid_service import OSIDService
@@ -59,6 +60,8 @@ if __name__ == '__main__':
     session_database = DataBaseConnection(session_config_file)
     assigning_application = AssigningApplication(session_database)
     application_id = assigning_application.get(name=pipeline_name, version=pipeline_version)
+    if not application_id:
+        sys.exit('Please add the assigning pipeline to the assigning_application table in the session database')
     production_database = ProductionDatabase(session_database)
     production_database_id = production_database.get(name=production_database_name)
 
