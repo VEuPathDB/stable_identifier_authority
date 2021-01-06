@@ -1,4 +1,5 @@
 import unittest
+import filecmp
 from allocation_service.annotation_events import EventCollection, AnnotationEvent
 from allocation_service.event_output import AnnotationEventFile
 from allocation_service.genomic_features import ProteinCodingGene, Feature
@@ -48,7 +49,7 @@ class AnnotationEventDB:
             ref_model2 = {"source": "reference", "id": "ABCD00002", "children": [{"id": "ABCD00002_R0001", "version": 2,
                                                                               "children": [{"id": "ABCD00002_P0001", "version": 2}]}]}
             merge_model1 = {"source": "apollo", "id": "DFGVE-DHETE", "children": [{"id": "DHEYODH-DHYERS", "version": 2,
-                                                                               "children": [{"id": "SGETFKCBW-IUDHET", "version": 2}]}]}
+                                                                               "children": [{"id": None, "version": 2}]}]}
             merge_1 = [ref_model1, ref_model2, merge_model1]
             events.append(merge_1)
 
@@ -66,6 +67,8 @@ class CollectionTestCase(unittest.TestCase):
         event_collection.create()
 
         self.assertEqual('ABC00015', event_collection.get_allocated_id('DFGVE-DHETE'))
+        self.assertEqual('ABC00015_R001', event_collection.get_allocated_id('DHEYODH-DHYERS'))
+        self.assertEqual('ABC00015_P001', event_collection.get_allocated_id('DHEYODH-DHYERS-CDS'))
 
 
 class EventFileTestCase(unittest.TestCase):
@@ -120,33 +123,37 @@ class FeatureTestCase(unittest.TestCase):
     def test_feature(self):
         index = dict()
         model = {"id": "ABCD00001", "version": 1, "children": [{"id": "ABCD00001_R0001",
-                                                                "children": [{"id": "ABCD00001_P0001", "version": 2}]}]}
+                                                                "children": [{"id": None, "version": 2}]}]}
         feature = Feature(model, index)
         self.assertEqual("ABCD00001", feature.source_id)
 
     def test_gene(self):
         index = dict()
         model = {"source": "apollo", "id": "ABCD00001", "children": [{"id": "ABCD00001_R0001", "version": 2,
-                                                                      "children": [{"id": "ABCD00001_P0001", "version": 2}]}]}
+                                                                      "children": [{"id": None, "version": 2}]}]}
         gene = ProteinCodingGene(model, index)
         self.assertEqual("ABCD00001", gene.source_id)
         self.assertEqual(1, len(gene.mrnas))
         mrna = gene.mrnas[0]
         self.assertEqual("ABCD00001_R0001", mrna.source_id)
         cds = mrna.cds
-        self.assertEqual("ABCD00001_P0001", cds.source_id)
+        self.assertEqual("ABCD00001_R0001-CDS", cds.source_id)
 
 
 class GFFTestCase(unittest.TestCase):
+
     def test_extract_ids(self):
         ga = GFFAnnotations('', '', '')
         ga._current_gff_line = 'KB704696    VectorBase  mRNA    767281  778992  .   +   .   owner=none;Parent=ABC001_R001;ID=ABC001;date_last_modified=2020-01-09;'
+        ga._current_fields = ['', '', 'mRNA']
         self.assertEqual(('ABC001', 'ABC001_R001'), ga._extract_ids())
 
         ga._current_gff_line = 'KB704696        VectorBase      gene    757672  778992  .       +       .       owner=none;ID=ABC001;date_last_modified=2020-01-09;'
+        ga._current_fields[2] = 'gene'
         self.assertEqual(('ABC001', None), ga._extract_ids())
 
         ga._current_gff_line = 'KB704696        VectorBase      CDS     770336  770396  .       +       0       Parent=ABC001_R001;ID=ABC001_R001-CDS;Name='
+        ga._current_fields[2] = 'CDS'
         self.assertEqual(('ABC001_R001-CDS', 'ABC001_R001'), ga._extract_ids())
 
     def test_is_feature_line(self):
@@ -166,6 +173,18 @@ class GFFTestCase(unittest.TestCase):
         ga._current_gff_line = 'KB704696\tVectorBase\tXXX\t770336\t770396\t.\t+\t.\tParent=ABC001_R001;ID=ABC001_R001-CDS;Name='
         ga._current_fields = ga._current_gff_line.rstrip().split("\t")
         self.assertEqual(False, ga._is_feature_line())
+
+    def test_update_feature(self):
+        event_connection = AnnotationEventDB(None)
+        stable_id_service = OSIDService(None)
+        event_collection = EventCollection('test', event_connection, stable_id_service)
+        event_collection.event_types = {'merge_gene'}
+        event_collection.create()
+
+        ga = GFFAnnotations('./test_update_feature.gff', './test_update_feature.out_gff', event_collection)
+        ga.annotate_gff()
+        filecmp.clear_cache()
+        self.assertEqual(True, filecmp.cmp('./expected_update_feature.gff', './test_update_feature.out_gff', shallow= False))
 
 
 if __name__ == '__main__':

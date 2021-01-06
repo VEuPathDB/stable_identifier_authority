@@ -25,7 +25,7 @@ class GFFAnnotations:
         self.out_gff_file = output_gff_file
         self.event_collection = event_collection
         self._current_gff_line = None
-        self._current_fields = None
+        self._current_fields = list()
         self._output_gff_handle = None
 
     def annotate_gff(self):
@@ -43,6 +43,8 @@ class GFFAnnotations:
             else:
                 """write to GFF"""
                 self._output_gff_handle.write(self._current_gff_line + '\n')
+        input_gff_handle.close()
+        self._output_gff_handle.close()
 
     def _is_feature_line(self):
         if len(self._current_fields) == 9 and self._current_fields[2] in self.allowed_feature:
@@ -78,6 +80,8 @@ class GFFAnnotations:
             gff_id = id_obj.group(1)
         if parent_obj:
             parent = parent_obj.group(1)
+        if self._current_fields[2] == 'CDS':
+            gff_id = parent + '-CDS'
 
         return gff_id, parent
 

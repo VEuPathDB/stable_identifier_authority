@@ -65,7 +65,7 @@ class MRNA(Feature):
 
         def __init__(self, model, index):
             super().__init__(model, index)
-            self.cds = CDS(model['children'][0], index)
+            self.cds = CDS(model, index)
 
         def set_allocated_id(self, identifier):
             mrna_id, cds_id = identifier
@@ -74,4 +74,6 @@ class MRNA(Feature):
 
 
 class CDS(Feature):
-        """coding sequence"""
+    """coding sequence"""
+    def setup_model(self, model):
+        self.source_id = model['id'] + '-CDS'
