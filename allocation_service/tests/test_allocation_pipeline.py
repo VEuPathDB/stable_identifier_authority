@@ -4,6 +4,7 @@ from allocation_service.annotation_events import EventCollection, AnnotationEven
 from allocation_service.event_output import AnnotationEventFile
 from allocation_service.genomic_features import ProteinCodingGene, Feature
 from allocation_service.event_output import GFFAnnotations
+from allocation_service.event_input import GffFilePasser
 
 
 class OSIDService:
@@ -56,6 +57,16 @@ class AnnotationEventDB:
             return events
         else:
             return False
+
+
+class EventInputTestCase(unittest.TestCase):
+    def test_events_from_gff(self):
+        expected_events = [[{"source": "reference",
+                             "id": 'DFGVE-DHETE',
+                             "children": [{"id": 'DHEYODH-DHYERS', "children": [{"id": 'SGETFKCBW-IUDHET'}]}]}]]
+        events = GffFilePasser('./test_input_feature.gff', './feature_filter')
+        observed_events = events.get_annotations_events('new_gene')
+        self.assertEqual(expected_events, observed_events)
 
 
 class CollectionTestCase(unittest.TestCase):

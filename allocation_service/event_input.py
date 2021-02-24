@@ -84,12 +84,22 @@ class GffFilePasser:
         self.genes = list()
         self.events = list()
         self.allowed_feature = set()
+        self._load_feature_filter(feature_filter)
+        self._load_events_from_gff(gff_file_path)
 
-        with open(feature_filter, 'r') as file:
+    def get_annotations_events(self, event_type):
+        if event_type == 'new_gene':
+            return self.events
+        else:
+            return list()  # return empty list
+
+    def _load_feature_filter(self, file_path):
+        with open(file_path, 'r') as file:
             for line in file:
                 feature_id = line.rstrip()
                 self.allowed_feature.add(feature_id)
 
+    def _load_events_from_gff(self, gff_file_path):
         with open(gff_file_path, 'r') as file:
             for line in file:
                 self._current_gff_line = line.rstrip()
@@ -98,11 +108,11 @@ class GffFilePasser:
                 if self._is_feature_line():
                     self._current_feature = self._current_fields[2]
                     self._current_gff_id, self._current_parent_id = self._extract_ids()
-                    self.add_features()
-                    self.build_gene_model()
-                    self.events.append(self.genes)
+                    self._add_features()
+        self._build_gene_model()
+        self.events.append(self.genes)
 
-    def add_features(self):
+    def _add_features(self):
         if self._current_feature == 'gene':
             self.features["gene"][self._current_gff_id] = {"parent": self._current_parent_id,
                                                            "json": {"source": "reference",
@@ -115,17 +125,17 @@ class GffFilePasser:
             self.features["CDS"][self._current_gff_id] = {"parent": self._current_parent_id,
                                                           "json": {"id": self._current_gff_id}}
 
-    def build_gene_model(self):
+    def _build_gene_model(self):
         for gff_id, model in self.features["CDS"].items():
             parent_mrna_id = model["parent"]
             if parent_mrna_id in self.features['mRNA']:
-                self.features["mRNA"][parent_mrna_id]["children"].append(model["json"])
+                self.features["mRNA"][parent_mrna_id]["json"]["children"].append(model["json"])
             else:
                 raise KeyError("mRNA id: {} is not found and the CDS {} is orphan".format(parent_mrna_id, gff_id))
         for gff_id, model in self.features["mRNA"].items():
             parent_gene_id = model["parent"]
             if parent_gene_id in self.features["gene"]:
-                self.features["gene"][parent_gene_id]["children"].append(model["json"])
+                self.features["gene"][parent_gene_id]["json"]["children"].append(model["json"])
             else:
                 raise KeyError("Gene id: {} is not found and the mRNA {} is orphan".format(parent_gene_id, gff_id))
         for gff_id, model in self.features["gene"].items():

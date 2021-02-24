@@ -14,7 +14,7 @@ limitations under the License.
 
 import configparser
 import sys
-from allocation_service.event_input import FlatFile
+from allocation_service.event_input import GffFilePasser
 from allocation_service.annotation_events import EventCollection
 from allocation_service.osid_service import OSIDService
 from allocation_service.event_output import GFFAnnotations, AnnotationEventFile, SessionService
@@ -33,11 +33,11 @@ if __name__ == '__main__':
     input_gff_path = allocation_config['FILE']['input_gff']
     output_gff_path = allocation_config['FILE']['output_gff']
     event_file_path = allocation_config['FILE']['event']
-    gene_model_id_file = allocation_config['FILE']['gene_model_id']
+    allowed_gene_models = allocation_config['FILE']['allowed_gene_models']
     organism_production_name = allocation_config['ProductionOrganism']['name']
     production_database_name = allocation_config['ProductionOrganism']['database']
 
-    event_input = FlatFile(gene_model_id_file)
+    event_input = GffFilePasser(input_gff_path, allowed_gene_models)
     osid_service = OSIDService(allocation_config)
     event_collection = EventCollection(organism_production_name, event_input, osid_service)
     event_collection.create()
