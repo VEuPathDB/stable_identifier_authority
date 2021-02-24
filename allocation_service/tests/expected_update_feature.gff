@@ -1,0 +1,3 @@
+KB704696	VectorBase	gene	757672	778992	.	+	.	owner=none;ID=ABC00015;date_last_modified=2020-01-09;
+KB704696	VectorBase	mRNA	767281	778992	.	+	.	owner=none;Parent=ABC00015;ID=ABC00015_R001;date_last_modified=2020-01-09;
+KB704696	VectorBase	CDS	770336	770396	.	+	.	Parent=ABC00015_R001;ID=ABC00015_P001;Name=xxxxxxx;

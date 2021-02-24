@@ -1,0 +1,3 @@
+KB704696	VectorBase	gene	757672	778992	.	+	.	owner=none;ID=DFGVE-DHETE;date_last_modified=2020-01-09;
+KB704696	VectorBase	mRNA	767281	778992	.	+	.	owner=none;Parent=DFGVE-DHETE;ID=DHEYODH-DHYERS;date_last_modified=2020-01-09;
+KB704696	VectorBase	CDS	770336	770396	.	+	.	Parent=DHEYODH-DHYERS;ID=SGETFKCBW-IUDHET;Name=xxxxxxx;
