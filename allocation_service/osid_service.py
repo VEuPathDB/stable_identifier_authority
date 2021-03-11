@@ -35,7 +35,7 @@ class OSIDService:
 
     def get_gene_id(self, organism_id, generate_genes):
         url = self.url_base + 'idSets'
-        webservice_data = {"collectionId": 1, "organismId": organism_id, "generateGenes": generate_genes}
+        webservice_data = {"organismId": organism_id, "generateGenes": generate_genes}
         response = requests.post(url, auth=(self.user, self.password), json=webservice_data)
         if response.status_code == requests.codes.ok:
             return response.json()["idSetId"], response.json()["generatedIds"]
