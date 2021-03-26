@@ -22,7 +22,9 @@ class Feature:
         self.source_id = str()
         self.allocated_id = str()
         self.osid_id = int
-        self.ancestors = list()
+        self.ancestors = set()
+        self.status_flags = set()
+        self.known_events = set()
         self.setup_model(model)
         self._register_my_self(index)
 
