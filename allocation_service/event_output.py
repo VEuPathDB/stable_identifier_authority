@@ -95,15 +95,18 @@ class AnnotationEventFile:
         for annotation_event_type in self.event_collection.annotation_event_list:
             event_type = annotation_event_type.event_type
             for event in annotation_event_type.event_list:
+                flag = event_type + '_written_to_history_file'
                 for gene in event:
-                    if gene.source_id != 'reference':
+                    if gene.source != 'reference' and flag not in gene.status_flags:
+                        gene.status_flags.add(flag)
                         if len(gene.ancestors) == 0 and gene.allocated_id:
                             self.file_handle.write(gene.allocated_id
                                                    + "\t" + event_type + "\t" + '' + "\n")
                         else:
                             for ancestor in gene.ancestors:
-                                self.file_handle.write(gene.allocated_id
-                                                       + "\t" + event_type + "\t" + ancestor.source_id + "\n")
+                                if event_type in ancestor.known_events:
+                                    self.file_handle.write(gene.allocated_id
+                                                           + "\t" + event_type + "\t" + ancestor.source_id + "\n")
 
         self.file_handle.close()
 
@@ -121,8 +124,9 @@ class SessionService:
 
             for event in annotation_event_type.event_list:
                 for gene in event:
-                    if gene.source_id != 'reference' and gene.allocated_id:
+                    if gene.allocated_id and "written_to_session_database" not in gene.status_flags:
                         self.add_feature(gene, 'gene')
+                        gene.status_flags.add("written_to_session_database")
                         for mrna in gene.mrnas:
                             self.add_feature(mrna, 'transcript')
 

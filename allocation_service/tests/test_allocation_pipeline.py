@@ -19,19 +19,28 @@ class OSIDService:
     @staticmethod
     def get_gene_id(organism_id, generate_genes):
         _ = organism_id
-
-        if generate_genes == 2:
+        if generate_genes == 3:
+            return 1, [{"geneId": "ABC00015", "transcripts": [], "proteins": []},
+                       {"geneId": "ABC00016", "transcripts": [], "proteins": []},
+                       {"geneId": "ABC00017", "transcripts": [], "proteins": []}]
+        elif generate_genes == 2:
             return 1,  [{"geneId": "ABC00015", "transcripts": [], "proteins": []},
-                                      {"geneId": "ABC00016", "transcripts": [], "proteins": []}]
+                        {"geneId": "ABC00016", "transcripts": [], "proteins": []}]
         elif generate_genes == 1:
             return 1, [{"geneId": "ABC00015", "transcripts": [], "proteins": []}]
+        else:
+            print("Error " + str(generate_genes))
 
     @staticmethod
     def get_transcripts(id_set_id, transcript_patch):
         _ = id_set_id
-        if len(transcript_patch) == 2:
+        if len(transcript_patch) == 3:
             return [{"geneId": "ABC00015", "transcripts": ['ABC00015_R001'], "proteins": ['ABC00015_P001']},
-                                  {"geneId": "ABC00016", "transcripts": ['ABC00016_R001'], "proteins": ['ABC00016_P001']}]
+                    {"geneId": "ABC00016", "transcripts": ['ABC00016_R001'], "proteins": ['ABC00016_P001']},
+                    {"geneId": "ABC00017", "transcripts": ['ABC00017_R001'], "proteins": ['ABC00017_P001']}]
+        elif len(transcript_patch) == 2:
+            return [{"geneId": "ABC00015", "transcripts": ['ABC00015_R001'], "proteins": ['ABC00015_P001']},
+                    {"geneId": "ABC00016", "transcripts": ['ABC00016_R001'], "proteins": ['ABC00016_P001']}]
         elif len(transcript_patch) == 1:
             return [{"geneId": "ABC00015", "transcripts": ['ABC00015_R001'], "proteins": ['ABC00015_P001']}]
 
@@ -54,6 +63,39 @@ class AnnotationEventDB:
             merge_1 = [ref_model1, ref_model2, merge_model1]
             events.append(merge_1)
 
+            return events
+        elif event_type == 'complex_split':
+            events = list()
+            ref_model_s1 = {"source": "reference", "id": "AARA004952", "children": [{"id": "AARA004952_R0001", "version": 2,
+                                                                                     "children": [{"id": "AARA004952_P0001", "version": 2}]}]}
+            split_model_s1a = {"source": "apollo", "id": "dd6f006e-613d-4507-84ec-d00e2097cd88", "children": [{"id": "DHEYODH-DHYERS-dd6f006e", "version": 2,
+                                                                                                               "children": [{"id": None, "version": 2}]}]}
+            split_model_s1b = {"source": "apollo", "id": "5d6f2e78-566e-4a3b-8534-d3422b77734d", "children": [{"id": "DHEYODH-DHYERS-5d6f2e78", "version": 2,
+                                                                                                               "children": [{"id": None, "version": 2}]}]}
+            complex_split1 = [ref_model_s1, split_model_s1a, split_model_s1b]
+            events.append(complex_split1)
+
+            ref_model_s2 = {"source": "reference", "id": "AARA004953", "children": [{"id": "AARA004953_R0001", "version": 2,
+                                                                                     "children": [{"id": "AARA004953_P0001", "version": 2}]}]}
+            split_model_s2a = {"source": "apollo", "id": "fd03de20-5f52-49a7-88b8-6f79443ff90b", "children": [{"id": "DHEYODH-DHYERS-fd03de20", "version": 2,
+                                                                                                               "children": [{"id": None, "version": 2}]}]}
+            split_model_s2b = {"source": "apollo", "id": "5d6f2e78-566e-4a3b-8534-d3422b77734d", "children": [{"id": "DHEYODH-DHYERS-5d6f2e78", "version": 2,
+                                                                                                               "children": [{"id": None, "version": 2}]}]}
+            complex_split2 = [ref_model_s2, split_model_s2a, split_model_s2b]
+            events.append(complex_split2)
+
+            return events
+
+        elif event_type == 'complex_merge':
+            events = list()
+            ref_model_m1 = {"source": "reference", "id": "AARA004952", "children": [{"id": "AARA004952_R0001", "version": 2,
+                                                                                     "children": [{"id": "AARA004952_P0001", "version": 2}]}]}
+            ref_model_m2 = {"source": "reference", "id": "AARA004953", "children": [{"id": "AARA004953_R0001", "version": 2,
+                                                                                     "children": [{"id": "AARA004953_P0001", "version": 2}]}]}
+            merge_model_m12 = {"source": "apollo", "id": "5d6f2e78-566e-4a3b-8534-d3422b77734d", "children": [{"id": "DHEYODH-DHYERS-5d6f2e78", "version": 2,
+                                                                                                               "children": [{"id": None, "version": 2}]}]}
+            complex_merge = [ref_model_m1, ref_model_m2, merge_model_m12]
+            events.append(complex_merge)
             return events
         else:
             return False
@@ -80,6 +122,10 @@ class CollectionTestCase(unittest.TestCase):
         self.assertEqual('ABC00015', event_collection.get_allocated_id('DFGVE-DHETE'))
         self.assertEqual('ABC00015_R001', event_collection.get_allocated_id('DHEYODH-DHYERS'))
         self.assertEqual('ABC00015_P001', event_collection.get_allocated_id('DHEYODH-DHYERS-CDS'))
+
+        event_collection = EventCollection('test', event_connection, stable_id_service)
+        event_collection.event_types = {'complex_split', 'complex_merge'}
+        event_collection.create()
 
 
 class EventFileTestCase(unittest.TestCase):

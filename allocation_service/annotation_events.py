@@ -70,13 +70,16 @@ class AnnotationEvent:
     def _create_genes(self, event, index):
         genes = list()
         for gene_model in event:
-            gene = ProteinCodingGene(gene_model, index)
+            if gene_model['id'] not in index:
+                gene = ProteinCodingGene(gene_model, index)
+                if gene.source != 'reference':
+                    self.new_gene_count += 1
+                    self.created_genes.append(gene)
+            else:
+                gene = index[gene_model['id']]
             genes.append(gene)
             self.gene_event_index[gene.source_id] = genes
 
-            if gene.source != 'reference':
-                self.new_gene_count += 1
-                self.created_genes.append(gene)
         return genes
 
     def _allocate_to_gene(self, osid_id, gene_id):
@@ -98,10 +101,12 @@ class AnnotationEvent:
             ancestors = list()
             for gene in event:
                 if gene.source == 'reference':
+                    gene.known_events.add(self.event_type)
                     ancestors.append(gene)
             for gene in event:
                 if gene.source != 'reference':
-                    gene.ancestors = ancestors
+                    for ancestor_gene in ancestors:
+                        gene.ancestors.add(ancestor_gene)
 
 
 class CreateGeneModelEvent(AnnotationEvent):
