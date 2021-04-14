@@ -34,7 +34,7 @@ class AnnotationEventDB:
                 genes.append({"source": "apollo", "id": event['cap_gene_id'], "version": 1,
                               "children": self.add_transcripts(event['cap_gene_id'])})
                 events.append(genes)
-            elif event_type == 'change_gene':
+            elif event_type == 'change_gene' or event_type == 'gain_iso_form' or event_type == 'lost_iso_form':
                 genes.append({"source": "reference", "id": event['vb_gene_id'], "version": None,
                               "children": self.add_transcripts(event['vb_gene_id'])})
                 genes.append({"source": "apollo", "id": event['cap_gene_id'], "version": None,
