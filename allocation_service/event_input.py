@@ -171,9 +171,7 @@ class GffFilePasser:
         Extract the attribs from the gff feature line
         Returns a dict of attribs with their key
         """
-        line = self._current_gff_line
-        columns = line.split("\t")
-        attrib_col = columns[9]
+        attrib_col = self._current_fields[9]
         
         attribs = {}
         for field in attrib_col.split(";"):
