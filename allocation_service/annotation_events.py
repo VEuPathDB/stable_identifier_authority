@@ -17,7 +17,7 @@ from allocation_service.genomic_features import ProteinCodingGene
 
 
 class EventCollection:
-    event_types = {'new_gene', 'change_gene', 'split_gene', 'merge_gene'}
+    event_types = {'new_gene', 'change_gene', 'lost_iso_form', 'gain_iso_form', 'split_gene', 'merge_gene'}
 
     def __init__(self, organism_name, event_connection, stable_id_service):
         self.organism_name = organism_name
@@ -28,7 +28,7 @@ class EventCollection:
 
     def create(self):
         for event_type in self.event_types:
-            if event_type == 'change_gene':
+            if event_type == 'change_gene' or event_type == 'lost_iso_form' or event_type == 'gain_iso_form':
                 annotation_event = EditOnlyEvent(event_type, self.organism_name,
                                                  self.event_connection, self.stable_id_service)
             else:
