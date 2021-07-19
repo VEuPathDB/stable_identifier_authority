@@ -34,10 +34,11 @@ if __name__ == '__main__':
     output_gff_path = allocation_config['FILE']['output_gff']
     event_file_path = allocation_config['FILE']['event']
     allowed_gene_models = allocation_config['FILE']['allowed_gene_models']
+    allowed_bio_types = allocation_config['FILE']['allowed_bio_types']
     organism_production_name = allocation_config['ProductionOrganism']['name']
     production_database_name = allocation_config['ProductionOrganism']['database']
 
-    event_input = GffFilePasser(input_gff_path, allowed_gene_models)
+    event_input = GffFilePasser(input_gff_path, allowed_gene_models, allowed_bio_types)
     osid_service = OSIDService(allocation_config)
     event_collection = EventCollection(organism_production_name, event_input, osid_service)
     event_collection.create()

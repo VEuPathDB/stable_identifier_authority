@@ -11,7 +11,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-import re
+from allocation_service import genomic_features
 
 """Module for classes getting annotation event from different sources"""
 
@@ -72,20 +72,32 @@ class AnnotationEventDB:
 
 
 class GffFilePasser:
-    allowed_feature_type = {'gene', 'mRNA', 'CDS', 'exon'}
-    features = {"gene": {}, "mRNA": {}, "CDS": {}}
+    """Class for parsing GFF files"""
 
-    def __init__(self, gff_file_path, feature_filter):
+    def __init__(self, gff_file_path, feature_filter, allowed_biotype):
         self._current_gff_line = None
         self._current_fields = list()
         self._current_feature = None
         self._current_gff_id = None
         self._current_parent_id = None
+        self.observers = list()
         self.genes = list()
         self.events = list()
         self.allowed_feature = set()
         self._load_feature_filter(feature_filter)
+        self._instantiate_observers(allowed_biotype)
         self._load_events_from_gff(gff_file_path)
+
+    def _instantiate_observers(self, file_path):
+        with open(file_path, 'r') as file:
+            for line in file:
+                allowed_object = line.rstrip()
+                if allowed_object == 'gene':
+                    self.observers.append(genomic_features.Gene(allowed_feature=self.allowed_feature))
+                elif allowed_object == 'ncRNA_gene':
+                    self.observers.append(genomic_features.NcRnaGene(allowed_feature=self.allowed_feature))
+                elif allowed_object == 'pseudogene':
+                    self.observers.append(genomic_features.PseudoGene(allowed_feature=self.allowed_feature))
 
     def get_annotations_events(self, event_type):
         if event_type == 'new_gene':
@@ -108,42 +120,16 @@ class GffFilePasser:
                 if self._is_feature_line():
                     self._current_feature = self._current_fields[2]
                     self._current_gff_id, self._current_parent_id = self._extract_ids()
-                    self._add_features()
-        self._build_gene_model()
-        self.events.append(self.genes)
-
-    def _add_features(self):
-        if self._current_feature == 'gene':
-            self.features["gene"][self._current_gff_id] = {"parent": self._current_parent_id,
-                                                           "json": {"source": "reference",
-                                                                    "id": self._current_gff_id,
-                                                                    "children": []}}
-        elif self._current_feature == 'mRNA':
-            self.features["mRNA"][self._current_gff_id] = {"parent": self._current_parent_id,
-                                                           "json": {"id": self._current_gff_id, "children": []}}
-        elif self._current_feature == 'CDS':
-            self.features["CDS"][self._current_gff_id] = {"parent": self._current_parent_id,
-                                                          "json": {"id": self._current_gff_id}}
-
-    def _build_gene_model(self):
-        for gff_id, model in self.features["CDS"].items():
-            parent_mrna_id = model["parent"]
-            if parent_mrna_id in self.features['mRNA']:
-                self.features["mRNA"][parent_mrna_id]["json"]["children"].append(model["json"])
-            else:
-                raise KeyError("mRNA id: {} is not found and the CDS {} is orphan".format(parent_mrna_id, gff_id))
-        for gff_id, model in self.features["mRNA"].items():
-            parent_gene_id = model["parent"]
-            if parent_gene_id in self.features["gene"]:
-                self.features["gene"][parent_gene_id]["json"]["children"].append(model["json"])
-            else:
-                raise KeyError("Gene id: {} is not found and the mRNA {} is orphan".format(parent_gene_id, gff_id))
-        for gff_id, model in self.features["gene"].items():
-            if gff_id in self.allowed_feature:
-                self.genes.append(model["json"])
+                    for observer in self.observers:
+                        observer.add_allowed_feature(self._current_feature,
+                                                     self._current_gff_id, self._current_parent_id)
+        for observer in self.observers:
+            finished_models = observer.build_model()
+            if len(finished_models) > 0:
+                self.events.append(finished_models)
 
     def _is_feature_line(self):
-        if len(self._current_fields) == 9 and self._current_fields[2] in self.allowed_feature_type:
+        if len(self._current_fields) == 9:
             return True
         else:
             return False
@@ -171,7 +157,7 @@ class GffFilePasser:
         Extract the attribs from the gff feature line
         Returns a dict of attribs with their key
         """
-        attrib_col = self._current_fields[9]
+        attrib_col = self._current_fields[8]
         
         attribs = {}
         for field in attrib_col.split(";"):

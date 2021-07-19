@@ -16,6 +16,8 @@ pass=
 input_gff=
 output_gff=
 event=
+allowed_gene_models=
+allowed_bio_types=
 [ProductionOrganism]
 name=
 database=

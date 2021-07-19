@@ -18,7 +18,7 @@ from session_service import rest_api
 
 
 class GFFAnnotations:
-    allowed_feature = {'gene', 'mRNA', 'CDS', 'exon'}
+    allowed_feature = {'gene', 'mRNA', 'CDS', 'exon', 'pseudogene', 'pseudogenic_transcript', 'ncRNA_gene', 'tRNA'}
 
     def __init__(self, input_gff_file, output_gff_file, event_collection):
         self.in_gff_file = input_gff_file
