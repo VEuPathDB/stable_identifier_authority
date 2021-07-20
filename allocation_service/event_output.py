@@ -71,19 +71,39 @@ class GFFAnnotations:
         self._output_gff_handle.write(self._current_gff_line + '\n')
 
     def _extract_ids(self):
-        id_obj = re.match(r'.*ID=(.+?);', self._current_gff_line, flags=0)
-        parent_obj = re.match(r'.*Parent=(.+?);', self._current_gff_line, flags=0)
+        """
+        Extract the ID and Parent of the current gff feature
+        """
 
         gff_id = None
         parent = None
-        if id_obj:
-            gff_id = id_obj.group(1)
-        if parent_obj:
-            parent = parent_obj.group(1)
-        if self._current_fields[2] == 'CDS':
-            gff_id = parent + '-CDS'
+        try:
+            attribs = self._extract_attribs()
+            if "ID" in attribs:
+                gff_id = attribs["ID"]
+            if "Parent" in attribs:
+                parent = attribs["Parent"]
+            if self._current_fields[2] == 'CDS':
+                gff_id = parent + '-CDS'
+        except:
+            pass
 
         return gff_id, parent
+
+    def _extract_attribs(self):
+        """
+        Extract the attribs from the gff feature line
+        Returns a dict of attribs with their key
+        """
+        attrib_col = self._current_fields[8]
+
+        attribs = {}
+        for field in attrib_col.split(";"):
+            if field:
+                (key, value) = field.split("=")
+                attribs[key] = value
+
+        return attribs
 
 
 class AnnotationEventFile:
