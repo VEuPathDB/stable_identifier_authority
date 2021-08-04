@@ -19,6 +19,7 @@ To setup the allocation service each organsim needs a allocation_pipeline.conf. 
 #### To run the software:
 
   python3 run_allocation_pipeline.py
+  
   python3 run_new_organism_allocation.py
 
 * schema: The database schema for the session service database.
